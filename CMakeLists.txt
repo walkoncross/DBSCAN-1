@@ -38,6 +38,7 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR} 
 	/usr/include/eigen3
 	${google-glog_BINARY_DIR}/glog
+	${CMAKE_SOURCE_DIR}/eigen
 	)
 
 add_definitions(-DBOOST_UBLAS_NDEBUG)

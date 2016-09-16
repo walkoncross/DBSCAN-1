@@ -1,3 +1,5 @@
+#include "gtest/gtest.h"
+
 #include <cmath>
 #include <iostream>
 #include <numeric>
@@ -11,44 +13,41 @@
 
 using namespace clustering;
 
+namespace {
+static const std::string CURRENT_TDIR( CURRENT_TEST_DIR );
+static const float MIN_T = 0.001;
+
 inline double dist( const Eigen::VectorXf& p1, const Eigen::VectorXf& p2 )
 {
     return ( p1 - p2 ).norm();
 }
 
 typedef VPTREE< Eigen::VectorXf, dist > TTree;
+}
 
-int main( int argc, char const* argv[] )
+TEST( VPTree, Basic )
 {
     Dataset::Ptr dset = Dataset::create();
-    std::cout << dset->load_csv( argv[1] ) << std::endl;
+    ASSERT_TRUE( dset->load_csv( CURRENT_TDIR + "/csv/vptree01.csv" ) );
 
-    double start = omp_get_wtime();
     TTree tree;
     tree.create( dset );
-    double end = omp_get_wtime();
-    std::cout << "creating tree took: " << end - start << " seconds" << std::endl;
 
     const Dataset::DataContainer& d = dset->data();
 
-    std::cout << d.size() << std::endl;
-
-    start = omp_get_wtime();
-    //#pragma omp parallel for
-    for ( size_t i = 0; i < std::min( size_t( 10 ), d.size() ); ++i ) {
+    for ( size_t i = 0; i < d.size(); ++i ) {
 
         TTree::TNeighborsList nlist;
 
-        std::cout << "Searching for " << i << std::endl;
+        LOG( INFO ) << "Searching for " << i << " [" << d[i] << "]";
 
-        tree.search( d[i], 1.0, nlist );
+        tree.search( d[i], MIN_T, nlist );
+
+        EXPECT_EQ( nlist.size(), 5u );
 
         for ( size_t j = 0; j < nlist.size(); ++j ) {
-            std::cout << nlist[j].first << " " << nlist[j].second << std::endl;
+            LOG( INFO ) << "Found neighbor id = " << nlist[j].first << " dist= " << nlist[j].second << " [" << d[nlist[j].first] << "]";
+            EXPECT_TRUE( dist( d[i], d[nlist[j].first] ) < MIN_T );
         }
     }
-    end = omp_get_wtime();
-    std::cout << "searching neighbors for all particles took: " << end - start << " seconds" << std::endl;
-
-    return 0;
 }

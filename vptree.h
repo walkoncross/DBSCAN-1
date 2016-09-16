@@ -158,7 +158,7 @@ private:
         const double dist = distance( d[m_items_idx[node.index]], target );
 
         if ( dist < t ) {
-            nlist.push_back( std::make_pair( node.index, dist ) );
+            nlist.push_back( std::make_pair( m_items_idx[node.index], dist ) );
         }
 
         if ( node.left == 0 && node.right == 0 ) {

@@ -34,12 +34,18 @@ SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
 add_subdirectory(glog)
 add_subdirectory(googletest)
 
+include_directories(
+	${CMAKE_CURRENT_SOURCE_DIR} 
+	/usr/include/eigen3
+	${google-glog_BINARY_DIR}/glog
+	)
+
 add_definitions(-DBOOST_UBLAS_NDEBUG)
 
 add_library(dbscan dbscan.cpp)
 
-add_executable(test_dbscan test_dbscan.cpp)
-target_link_libraries(test_dbscan dbscan)
+#add_executable(test_dbscan test_dbscan.cpp)
+#target_link_libraries(test_dbscan dbscan)
 
 if (PYTHONLIBS_FOUND AND Boost_FOUND)	
 	include_directories( 
@@ -61,7 +67,7 @@ endif(PYTHONLIBS_FOUND AND Boost_FOUND)
 
 # add_executable(vptree main_vptree.cpp)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} "/usr/include/eigen3")
+
 
 # add_executable(dset_test dataset_test.cpp)
 # add_executable(dbscan_vp test_dbscan_vp.cpp)

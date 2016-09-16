@@ -78,7 +78,7 @@ public:
 
             find_neighbors( d, pid, index_neigh );
 
-            std::cout << "Analyzing pid " << pid << " Neigh size " << index_neigh.size() << std::endl;
+            // std::cout << "Analyzing pid " << pid << " Neigh size " << index_neigh.size() << std::endl;
 
             if ( index_neigh.size() < m_min_elems )
                 continue;
@@ -89,7 +89,7 @@ public:
             candidates.push_back( pid );
 
             while ( candidates.size() > 0 ) {
-                std::cout << "\tcandidates = " << candidates.size() << std::endl;
+                // std::cout << "\tcandidates = " << candidates.size() << std::endl;
 
                 new_candidates.clear();
 
@@ -97,7 +97,7 @@ public:
 
                     find_neighbors( d, c_pid, c_neigh );
 
-                    std::cout << "\tAnalyzing c_pid " << c_pid << " c_Neigh size " << c_neigh.size() << std::endl;
+                    // std::cout << "\tAnalyzing c_pid " << c_pid << " c_Neigh size " << c_neigh.size() << std::endl;
 
                     for ( const auto& nn : c_neigh ) {
 
@@ -108,7 +108,7 @@ public:
 
                         find_neighbors( d, nn.first, n_neigh );
 
-                        std::cout << "\t\tAnalyzing nn_pid " << nn.first << " nn_Neigh size " << n_neigh.size() << std::endl;
+                        // std::cout << "\t\tAnalyzing nn_pid " << nn.first << " nn_Neigh size " << n_neigh.size() << std::endl;
 
                         if ( n_neigh.size() >= m_min_elems ) {
                             new_candidates.push_back( nn.first );
@@ -116,64 +116,11 @@ public:
                     }
                 }
 
-                std::cout << "\tnew candidates = " << new_candidates.size() << std::endl;
+                // std::cout << "\tnew candidates = " << new_candidates.size() << std::endl;
 
                 candidates = new_candidates;
             }
             ++cluster_id;
-        }
-    }
-
-    void fit2( const Dataset::Ptr dset )
-    {
-        const Dataset::DataContainer& d = dset->data();
-
-        m_vp_tree = boost::make_shared< TVpTree >();
-        m_vp_tree->create( dset );
-
-        const size_t dlen = d.size();
-
-        prepare_labels( dlen );
-
-        std::vector< uint8_t > visited( dlen );
-
-        uint32_t cluster_id = 0;
-
-        TVpTree::TNeighborsList ne1;
-        TVpTree::TNeighborsList ne2;
-
-        for ( uint32_t pid = 0; pid < dlen; ++pid ) {
-            if ( !visited[pid] ) {
-                visited[pid] = 1;
-
-                find_neighbors( d, pid, ne1 );
-
-                if ( ne1.size() >= m_min_elems ) {
-                    m_labels[pid] = cluster_id;
-
-                    for ( uint32_t i = 0; i < ne1.size(); ++i ) {
-                        uint32_t nPid = ne1[i].first;
-
-                        if ( !visited[nPid] ) {
-                            visited[nPid] = 1;
-
-                            find_neighbors( d, nPid, ne2 );
-
-                            if ( ne2.size() >= m_min_elems ) {
-                                for ( const auto& n2 : ne2 ) {
-                                    ne1.push_back( n2 );
-                                }
-                            }
-                        }
-
-                        if ( m_labels[nPid] == -1 ) {
-                            m_labels[nPid] = cluster_id;
-                        }
-                    }
-
-                    ++cluster_id;
-                }
-            }
         }
     }
 

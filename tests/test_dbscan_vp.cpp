@@ -1,3 +1,5 @@
+#include "gtest/gtest.h"
+
 #include <cmath>
 #include <iostream>
 #include <numeric>
@@ -7,70 +9,84 @@
 #include <dataset.h>
 #include <Eigen/Dense>
 
+#include "logging.h"
+
 #include "dbscan_vp.h"
+
+namespace {
+static const std::string CURRENT_TDIR( CURRENT_TEST_DIR );
+}
 
 using namespace clustering;
 
-int main( int argc, char const* argv[] )
+TEST( DBSCAN_VP, TwoClusters )
 {
-    double start = omp_get_wtime();
     Dataset::Ptr dset = Dataset::create();
-    //dset->gen_cluster_data( 225, 100000 );
-    dset->load_csv( argv[1] );
-    double end = omp_get_wtime();
+    dset->load_csv( CURRENT_TDIR + "/csv/vptree01.csv" );
 
-    std::cout << "data gen took: " << end - start << " seconds" << std::endl;
-
-    start = omp_get_wtime();
-
-    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( 0.3, 5, 1 );
+    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( 0.01, 5, 1 );
     dbs->fit( dset );
 
-    end = omp_get_wtime();
+    const DBSCAN_VP::Labels& l = dbs->get_labels();
 
-    std::cout << "clustering took: " << end - start << " seconds" << std::endl;
-
-    std::cout << "[ ";
-    for ( const auto& l : dbs->get_labels() ) {
-        std::cout << " " << l;
+    for ( size_t i = 0; i < l.size(); ++i ) {
+        LOG( INFO ) << "Element = " << i << " cluster = " << l[i];
+        if ( i < 5 ) {
+            EXPECT_EQ( l[i], 0 );
+        } else {
+            EXPECT_EQ( l[i], 1 );
+        }
     }
-    std::cout << " ] " << std::endl;
+}
 
-    const auto& labels = dset->get_labels();
+TEST( DBSCAN_VP, OneCluster )
+{
+    Dataset::Ptr dset = Dataset::create();
+    dset->load_csv( CURRENT_TDIR + "/csv/vptree02.csv" );
 
-    std::cout
-        << "[ ";
-    for ( ssize_t i = 0; i < labels.size(); ++i ) {
-        std::cout << " " << uint32_t( labels[i] );
+    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( 0.01, 5, 1 );
+    dbs->fit( dset );
+
+    const DBSCAN_VP::Labels& l = dbs->get_labels();
+
+    for ( size_t i = 0; i < l.size(); ++i ) {
+        LOG( INFO ) << "Element = " << i << " cluster = " << l[i];
+        if ( i < 6 ) {
+            EXPECT_EQ( l[i], 0 );
+        } else {
+            EXPECT_EQ( l[i], -1 );
+        }
     }
-    std::cout << " ] " << std::endl;
+}
 
-    // double start = omp_get_wtime();
-    // VpTree< Eigen::VectorXf, dist > tree( dset->data() );
-    // tree.create();
-    // double end = omp_get_wtime();
-    // std::cout << "creating tree took: " << end - start << " seconds" << std::endl;
+TEST( DBSCAN_VP, NoClusters )
+{
+    Dataset::Ptr dset = Dataset::create();
+    dset->load_csv( CURRENT_TDIR + "/csv/vptree03.csv" );
 
-    // const Dataset::DataContainer& d = dset->data();
+    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( 0.01, 2, 1 );
+    dbs->fit( dset );
 
-    // std::cout << d.size() << std::endl;
+    const DBSCAN_VP::Labels& l = dbs->get_labels();
 
-    // start = omp_get_wtime();
-    // //#pragma omp parallel for
-    // for ( size_t i = 0; i < std::min( size_t( 10 ), d.size() ); ++i ) {
-    //     std::vector< double > distances;
-    //     std::vector< size_t > neighbors;
+    for ( size_t i = 0; i < l.size(); ++i ) {
+        LOG( INFO ) << "Element = " << i << " cluster = " << l[i];
+        EXPECT_EQ( l[i], -1 );
+    }
+}
 
-    //     std::cout << "Searching for " << i << std::endl;
+TEST( DBSCAN_VP, Iris )
+{
+    Dataset::Ptr dset = Dataset::create();
+    dset->load_csv( CURRENT_TDIR + "/csv/iris.data.txt" );
 
-    //     tree.search( d[i], 1.0, &neighbors, &distances );
+    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( 0.4, 5, 1 );
 
-    //     for ( size_t j = 0; j < distances.size(); ++j ) {
-    //         std::cout << distances[j] << " " << neighbors[j] << std::endl;
-    //     }
-    // }
-    // end = omp_get_wtime();
-    // std::cout << "searching neighbors for all particles took: " << end - start << " seconds" << std::endl;
+    dbs->fit( dset );
 
-    // return 0;
+    const DBSCAN_VP::Labels& l = dbs->get_labels();
+
+    for ( size_t i = 0; i < l.size(); ++i ) {
+        LOG( INFO ) << "Element = " << i << " cluster = " << l[i];
+    }
 }

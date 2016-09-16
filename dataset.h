@@ -13,6 +13,8 @@
 
 #include <Eigen/Dense>
 
+#include "logging.h"
+
 namespace clustering {
 class Dataset : private boost::noncopyable {
 public:
@@ -48,7 +50,7 @@ public:
         std::ifstream in( csv_file_path );
 
         if ( !in.is_open() ) {
-            std::cout << "Not opened " << csv_file_path << std::endl;
+            LOG( ERROR ) << "File not opened " << csv_file_path;
             return false;
         }
 
@@ -86,7 +88,7 @@ public:
 
             if ( r == known_labels.end() ) {
                 known_labels.insert( std::make_pair( label_str, label_idx ) );
-                std::cout << "Found new label " << label_str << " " << found_label << std::endl;
+                LOG( INFO ) << "Found new label " << label_str;
                 ++label_idx;
             } else {
                 found_label = r->second;

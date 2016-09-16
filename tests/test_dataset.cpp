@@ -1,12 +1,15 @@
+#include "gtest/gtest.h"
+
 #include <dataset.h>
 
 using namespace clustering;
 
-int main( int argc, char const* argv[] )
+namespace {
+static const std::string CURRENT_TDIR( CURRENT_TEST_DIR );
+}
+
+TEST( Dataset, Iris )
 {
     Dataset::Ptr dset = Dataset::create();
-
-    std::cout << dset->load_csv( argv[1] ) << std::endl;
-
-    return 0;
+    ASSERT_TRUE( dset->load_csv( CURRENT_TDIR + "/csv/iris.data.txt" ) );
 }

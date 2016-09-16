@@ -59,12 +59,12 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND)
 
 endif(PYTHONLIBS_FOUND AND Boost_FOUND)
 
-add_executable(vptree main_vptree.cpp)
+# add_executable(vptree main_vptree.cpp)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} "/usr/include/eigen3")
 
-add_executable(dset_test dataset_test.cpp)
-add_executable(dbscan_vp test_dbscan_vp.cpp)
+# add_executable(dset_test dataset_test.cpp)
+# add_executable(dbscan_vp test_dbscan_vp.cpp)
 
 enable_testing()
 

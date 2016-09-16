@@ -1,16 +1,29 @@
+#include <omp.h>
 #include "dbscan.h"
 
 using namespace clustering;
 
 int main()
 {
-	DBSCAN::ClusterData cl_d = DBSCAN::gen_cluster_data( 225, 10000 );
+    std::cout << "Generating data.." << std::endl;
 
-	DBSCAN dbs(0.1, 5, 1);
+    double start = omp_get_wtime();
 
-	dbs.fit( cl_d );
+    DBSCAN::ClusterData cl_d = DBSCAN::gen_cluster_data( 225, 100000 );
 
-	//std::cout << dbs << std::endl;
+    double end = omp_get_wtime();
 
-	return 0;
+    std::cout << "data gen took: " << end - start << " seconds" << std::endl;
+
+    DBSCAN dbs( 0.1, 5, 1 );
+
+    start = omp_get_wtime();
+
+    dbs.fit( cl_d );
+
+    end = omp_get_wtime();
+
+    std::cout << "clustering took: " << end - start << " seconds" << std::endl;
+
+    return 0;
 }

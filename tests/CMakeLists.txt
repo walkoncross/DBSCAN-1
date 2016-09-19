@@ -37,3 +37,12 @@ SET( SOURCES
 SET( LIBRARIES )
 
 setupTests( "dbscan" "${SOURCES}" "${LIBRARIES}" )
+
+SET( SOURCES
+    ${MAIN_TEST_CPP}
+    test_benchmark.cpp
+)
+
+SET( LIBRARIES )
+
+setupTests( "benchmark" "${SOURCES}" "${LIBRARIES}" )

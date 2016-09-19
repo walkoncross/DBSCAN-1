@@ -11,7 +11,7 @@ set(Boost_USE_STATIC_RUNTIME OFF)
 
 FIND_PACKAGE(PythonInterp)
 FIND_PACKAGE(PythonLibs)
-find_package(Boost REQUIRED COMPONENTS python)
+find_package(Boost REQUIRED COMPONENTS program_options python)
 
 if (Boost_FOUND)
     include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
@@ -76,6 +76,7 @@ endif(PYTHONLIBS_FOUND AND Boost_FOUND)
 enable_testing()
 
 add_subdirectory(tests)
+add_subdirectory(tools)
 
 MESSAGE("CMAKE_C_FLAGS ${CMAKE_C_FLAGS}")
 MESSAGE("CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")

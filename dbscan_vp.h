@@ -5,7 +5,7 @@
 #include <Eigen/Dense>
 
 namespace clustering {
-class DBSCAN_VP {
+class DBSCAN_VP : private boost::noncopyable {
 private:
     static inline double dist( const Eigen::VectorXf& p1, const Eigen::VectorXf& p2 )
     {
@@ -14,54 +14,63 @@ private:
 
     typedef VPTREE< Eigen::VectorXf, dist > TVpTree;
 
+    const Dataset::Ptr m_dset;
+
 public:
     typedef std::vector< int32_t > Labels;
     typedef boost::shared_ptr< DBSCAN_VP > Ptr;
 
-    DBSCAN_VP( double eps, size_t min_elems, int num_threads = 0 )
-        : m_eps( eps )
-        , m_min_elems( min_elems )
-        , m_num_threads( num_threads )
+    DBSCAN_VP( const Dataset::Ptr dset )
+        : m_dset( dset )
+        , m_fit_time( .0 )
+        , m_predict_time( .0 )
     {
     }
-    DBSCAN_VP()
-        : m_eps( .0 )
-        , m_min_elems( 0 )
-        , m_num_threads( 0 )
-    {
-    }
+
     ~DBSCAN_VP()
     {
     }
 
-    void init( double eps, size_t min_elems, int num_threads = 0 )
+    void fit()
     {
-        m_eps = eps;
-        m_min_elems = min_elems;
-        m_num_threads = 0;
-    }
+        const Dataset::DataContainer& d = m_dset->data();
 
-    void find_neighbors( const Dataset::DataContainer& d, uint32_t pid, TVpTree::TNeighborsList& neighbors )
-    {
-        neighbors.clear();
-        m_vp_tree->search( d[pid], m_eps, neighbors );
-
-        // std::cout << "Searching neighbors " << pid << " " << neighbors.size() << std::endl;
-        // for ( size_t i = 0; i < neighbors.size(); ++i ) {
-        //     std::cout << "\t N" << neighbors[i] << " " << distances[i] << std::endl;
-        // }
-    }
-
-    void fit( const Dataset::Ptr dset )
-    {
-        const Dataset::DataContainer& d = dset->data();
+        const double start = omp_get_wtime();
 
         m_vp_tree = boost::make_shared< TVpTree >();
-        m_vp_tree->create( dset );
+        m_vp_tree->create( m_dset );
 
         const size_t dlen = d.size();
 
         prepare_labels( dlen );
+
+        m_fit_time = omp_get_wtime() - start;
+    }
+
+    const std::vector< double > predict_eps( size_t k )
+    {
+        const Dataset::DataContainer& d = m_dset->data();
+
+        std::vector< double > r;
+        r.reserve( d.size() );
+
+        TVpTree::TNeighborsList nlist;
+
+        for ( size_t i = 0; i < d.size(); ++i ) {
+            m_vp_tree->search_by_k( d[i], k, nlist, true );
+
+            if ( nlist.size() >= k ) {
+                r.push_back( nlist[0].second );
+            }
+        }
+
+        std::sort( r.begin(), r.end() );
+
+        return std::move( r );
+    }
+
+    uint32_t predict( double eps, size_t min_elems )
+    {
 
         std::vector< uint32_t > candidates;
         std::vector< uint32_t > new_candidates;
@@ -72,15 +81,20 @@ public:
         TVpTree::TNeighborsList n_neigh;
         TVpTree::TNeighborsList c_neigh;
 
+        const double start = omp_get_wtime();
+
+        const Dataset::DataContainer& d = m_dset->data();
+        const size_t dlen = d.size();
+
         for ( uint32_t pid = 0; pid < dlen; ++pid ) {
             if ( m_labels[pid] >= 0 )
                 continue;
 
-            find_neighbors( d, pid, index_neigh );
+            find_neighbors( d, eps, pid, index_neigh );
 
             // std::cout << "Analyzing pid " << pid << " Neigh size " << index_neigh.size() << std::endl;
 
-            if ( index_neigh.size() < m_min_elems )
+            if ( index_neigh.size() < min_elems )
                 continue;
 
             m_labels[pid] = cluster_id;
@@ -95,7 +109,7 @@ public:
 
                 for ( const auto& c_pid : candidates ) {
 
-                    find_neighbors( d, c_pid, c_neigh );
+                    find_neighbors( d, eps, c_pid, c_neigh );
 
                     // std::cout << "\tAnalyzing c_pid " << c_pid << " c_Neigh size " << c_neigh.size() << std::endl;
 
@@ -106,11 +120,11 @@ public:
 
                         m_labels[nn.first] = cluster_id;
 
-                        find_neighbors( d, nn.first, n_neigh );
+                        find_neighbors( d, eps, nn.first, n_neigh );
 
                         // std::cout << "\t\tAnalyzing nn_pid " << nn.first << " nn_Neigh size " << n_neigh.size() << std::endl;
 
-                        if ( n_neigh.size() >= m_min_elems ) {
+                        if ( n_neigh.size() >= min_elems ) {
                             new_candidates.push_back( nn.first );
                         }
                     }
@@ -122,10 +136,15 @@ public:
             }
             ++cluster_id;
         }
+
+        m_predict_time = omp_get_wtime() - start;
+
+        return cluster_id;
     }
 
     void reset()
     {
+        m_vp_tree.reset();
         m_labels.clear();
     }
 
@@ -134,10 +153,25 @@ public:
         return m_labels;
     }
 
+    const double get_fit_time() const
+    {
+        return m_fit_time;
+    }
+
+    const double get_predict_time() const
+    {
+        return m_predict_time;
+    }
+
 private:
-    double m_eps;
-    size_t m_min_elems;
-    int m_num_threads;
+    void find_neighbors( const Dataset::DataContainer& d,
+                         double eps,
+                         uint32_t pid,
+                         TVpTree::TNeighborsList& neighbors )
+    {
+        neighbors.clear();
+        m_vp_tree->search_by_dist( d[pid], eps, neighbors );
+    }
 
     Labels m_labels;
 
@@ -151,6 +185,8 @@ private:
     }
 
     TVpTree::Ptr m_vp_tree;
+    double m_fit_time;
+    double m_predict_time;
 };
 
 // std::ostream& operator<<( std::ostream& o, DBSCAN& d );

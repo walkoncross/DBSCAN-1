@@ -16,7 +16,26 @@
 namespace clustering {
 
 template < typename T, double ( *distance )( const T&, const T& ) >
-class VPTREE {
+class VPTREE : private boost::noncopyable {
+private:
+    constexpr static const double MIN_SIMILAR_DIST = 1e-7;
+
+    struct HeapItem {
+        HeapItem( size_t idx, double dist )
+            : idx( idx )
+            , dist( dist )
+        {
+        }
+        size_t idx;
+        double dist;
+        bool operator<( const HeapItem& o ) const
+        {
+            return dist < o.dist;
+        }
+    };
+
+    typedef std::priority_queue< HeapItem > TPQueue;
+
 public:
     typedef boost::shared_ptr< VPTREE > Ptr;
     typedef std::pair< size_t, float > TNeighbor;
@@ -27,6 +46,14 @@ public:
     VPTREE()
         : m_root_idx( FIRTS_NODE_IDX )
         , m_next_idx( FIRTS_NODE_IDX )
+        , m_similar_dist( MIN_SIMILAR_DIST )
+    {
+    }
+
+    VPTREE( double similar_dist )
+        : m_root_idx( FIRTS_NODE_IDX )
+        , m_next_idx( FIRTS_NODE_IDX )
+        , m_similar_dist( similar_dist )
     {
     }
 
@@ -52,14 +79,32 @@ public:
         m_root_idx = buildFromPoints( 0, d.size(), d );
     }
 
-    void search( const T& target, double t, TNeighborsList& nlist ) const
+    void search_by_dist( const T& target, double t, TNeighborsList& nlist ) const
     {
         nlist.clear();
 
         const Dataset::DataContainer& d = m_dataset->data();
-        std::priority_queue< HeapItem > heap;
 
-        search( m_root_idx, target, nlist, t, d );
+        search_by_dist( m_root_idx, target, nlist, t, d );
+    }
+
+    void search_by_k( const T& target, size_t k, TNeighborsList& nlist, bool exclude_exact = false ) const
+    {
+        nlist.clear();
+
+        double t = std::numeric_limits< double >::max();
+
+        const Dataset::DataContainer& d = m_dataset->data();
+
+        TPQueue heap;
+
+        search_by_k( m_root_idx, target, nlist, k, d, heap, t, exclude_exact );
+
+        while ( !heap.empty() ) {
+            const auto& top = heap.top();
+            nlist.push_back( std::make_pair( top.idx, top.dist ) );
+            heap.pop();
+        }
     }
 
 private:
@@ -80,26 +125,13 @@ private:
 
     uint32_t m_root_idx;
     uint32_t m_next_idx;
+    double m_similar_dist;
     typedef std::vector< Node > TNodeList;
 
     TNodeList m_nodelist;
 
     Dataset::Ptr m_dataset;
     std::vector< size_t > m_items_idx;
-
-    struct HeapItem {
-        HeapItem( int index, double dist )
-            : index( index )
-            , dist( dist )
-        {
-        }
-        int index;
-        double dist;
-        bool operator<( const HeapItem& o ) const
-        {
-            return dist < o.dist;
-        }
-    };
 
     struct DistanceComparator {
         size_t item_idx;
@@ -148,7 +180,67 @@ private:
         return cur_node_idx;
     }
 
-    void search( uint32_t node_idx, const T& target, TNeighborsList& nlist, double& t, const Dataset::DataContainer& d ) const
+    void search_by_k( uint32_t node_idx,
+                      const T& target,
+                      TNeighborsList& nlist,
+                      size_t k,
+                      const Dataset::DataContainer& d,
+                      TPQueue& heap,
+                      double& t,
+                      bool exclude_exact ) const
+    {
+        if ( node_idx == 0 )
+            return;
+
+        const Node& node = m_nodelist[node_idx];
+
+        const double dist = distance( d[m_items_idx[node.index]], target );
+
+        if ( dist < t ) {
+
+            if ( exclude_exact && dist < m_similar_dist ) {
+                /** do nothing on similar points **/
+            } else {
+
+                if ( heap.size() == k )
+                    heap.pop();
+                heap.push( HeapItem( m_items_idx[node.index], dist ) );
+                if ( heap.size() == k )
+                    t = heap.top().dist;
+            }
+        }
+
+        // LOG( INFO ) << "dist = " << dist << " tau = " << t << " " << ( dist < t ) << " " << heap.size();
+
+        if ( node.left == 0 && node.right == 0 ) {
+            return;
+        }
+
+        if ( dist < node.threshold ) {
+            if ( dist - t <= node.threshold ) {
+                search_by_k( node.left, target, nlist, k, d, heap, t, exclude_exact );
+            }
+
+            if ( dist + t >= node.threshold ) {
+                search_by_k( node.right, target, nlist, k, d, heap, t, exclude_exact );
+            }
+
+        } else {
+            if ( dist + t >= node.threshold ) {
+                search_by_k( node.right, target, nlist, k, d, heap, t, exclude_exact );
+            }
+
+            if ( dist - t <= node.threshold ) {
+                search_by_k( node.left, target, nlist, k, d, heap, t, exclude_exact );
+            }
+        }
+    }
+
+    void search_by_dist( uint32_t node_idx,
+                         const T& target,
+                         TNeighborsList& nlist,
+                         double t,
+                         const Dataset::DataContainer& d ) const
     {
         if ( node_idx == 0 )
             return;
@@ -167,20 +259,20 @@ private:
 
         if ( dist < node.threshold ) {
             if ( dist - t <= node.threshold ) {
-                search( node.left, target, nlist, t, d );
+                search_by_dist( node.left, target, nlist, t, d );
             }
 
             if ( dist + t >= node.threshold ) {
-                search( node.right, target, nlist, t, d );
+                search_by_dist( node.right, target, nlist, t, d );
             }
 
         } else {
             if ( dist + t >= node.threshold ) {
-                search( node.right, target, nlist, t, d );
+                search_by_dist( node.right, target, nlist, t, d );
             }
 
             if ( dist - t <= node.threshold ) {
-                search( node.left, target, nlist, t, d );
+                search_by_dist( node.left, target, nlist, t, d );
             }
         }
     }

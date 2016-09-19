@@ -24,8 +24,9 @@ TEST( DBSCAN_VP, TwoClusters )
     Dataset::Ptr dset = Dataset::create();
     dset->load_csv( CURRENT_TDIR + "/csv/vptree01.csv" );
 
-    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( 0.01, 5, 1 );
-    dbs->fit( dset );
+    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( dset );
+    dbs->fit();
+    dbs->predict( 0.01, 5 );
 
     const DBSCAN_VP::Labels& l = dbs->get_labels();
 
@@ -44,8 +45,9 @@ TEST( DBSCAN_VP, OneCluster )
     Dataset::Ptr dset = Dataset::create();
     dset->load_csv( CURRENT_TDIR + "/csv/vptree02.csv" );
 
-    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( 0.01, 5, 1 );
-    dbs->fit( dset );
+    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( dset );
+    dbs->fit();
+    dbs->predict( 0.01, 5 );
 
     const DBSCAN_VP::Labels& l = dbs->get_labels();
 
@@ -64,8 +66,9 @@ TEST( DBSCAN_VP, NoClusters )
     Dataset::Ptr dset = Dataset::create();
     dset->load_csv( CURRENT_TDIR + "/csv/vptree03.csv" );
 
-    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( 0.01, 2, 1 );
-    dbs->fit( dset );
+    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( dset );
+    dbs->fit();
+    dbs->predict( 0.01, 2 );
 
     const DBSCAN_VP::Labels& l = dbs->get_labels();
 
@@ -80,13 +83,29 @@ TEST( DBSCAN_VP, Iris )
     Dataset::Ptr dset = Dataset::create();
     dset->load_csv( CURRENT_TDIR + "/csv/iris.data.txt" );
 
-    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( 0.4, 5, 1 );
+    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( dset );
 
-    dbs->fit( dset );
+    dbs->fit();
+    dbs->predict( 0.4, 5 );
 
     const DBSCAN_VP::Labels& l = dbs->get_labels();
 
     for ( size_t i = 0; i < l.size(); ++i ) {
         LOG( INFO ) << "Element = " << i << " cluster = " << l[i];
+    }
+}
+
+TEST( DBSCAN_VP, IrisAnalyze )
+{
+    Dataset::Ptr dset = Dataset::create();
+    dset->load_csv( CURRENT_TDIR + "/csv/iris.data.txt" );
+
+    DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( dset );
+
+    dbs->fit();
+    const auto r = dbs->predict_eps( 3u );
+
+    for ( size_t i = 0; i < r.size(); ++i ) {
+        std::cout << ( i + 1 ) << "," << r[i] << std::endl;
     }
 }

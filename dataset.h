@@ -20,7 +20,7 @@ class Dataset : private boost::noncopyable {
 public:
     typedef boost::shared_ptr< Dataset > Ptr;
     typedef std::vector< Eigen::VectorXf > DataContainer;
-    typedef Eigen::VectorXf LabelsContainer;
+    typedef std::vector< size_t > LabelsContainer;
 
     static Ptr create()
     {
@@ -28,6 +28,8 @@ public:
     }
 
     Dataset()
+        : m_rows( 0 )
+        , m_cols( 0 )
     {
     }
 
@@ -54,11 +56,14 @@ public:
             return false;
         }
 
+        TKnownLabels known_labels;
+        m_everse_labels.clear();
+
         std::string line;
 
         std::vector< float > row_cache;
-        std::vector< float > labels_cache;
-        std::unordered_map< std::string, size_t > known_labels;
+        _labels.clear();
+
         size_t label_idx = 0;
 
         while ( std::getline( in, line ) ) {
@@ -88,13 +93,23 @@ public:
 
             if ( r == known_labels.end() ) {
                 known_labels.insert( std::make_pair( label_str, label_idx ) );
+                m_everse_labels.insert( std::make_pair( label_idx, label_str ) );
                 LOG( INFO ) << "Found new label " << label_str;
                 ++label_idx;
             } else {
                 found_label = r->second;
             }
 
-            labels_cache.push_back( float( found_label ) );
+            if ( !m_cols ) {
+                m_cols = row_cache.size();
+            } else {
+
+                if ( m_cols != row_cache.size() ) {
+                    LOG( ERROR ) << "Corrupted line \"" << line << "\"";
+                    LOG( ERROR ) << "Row size = " << m_cols << " line size = " << row_cache.size();
+                    continue;
+                }
+            }
 
             Eigen::VectorXf col_vector( row_cache.size() );
             for ( size_t i = 0; i < row_cache.size(); ++i ) {
@@ -102,14 +117,14 @@ public:
             }
 
             _data.emplace_back( col_vector );
+            _labels.push_back( found_label );
+
+            ++m_rows;
         }
 
         in.close();
 
-        _labels.resize( labels_cache.size() );
-        for ( size_t i = 0; i < labels_cache.size(); ++i ) {
-            _labels( i ) = labels_cache[i];
-        }
+        assert( _data.size() == _labels.size() );
 
         return true;
     }
@@ -119,14 +134,25 @@ public:
         return _data;
     }
 
-    const LabelsContainer& get_labels() const
+    const std::string get_label( size_t id ) const
     {
-        return _labels;
+        auto r = m_everse_labels.find( _labels[id] );
+        if ( r == m_everse_labels.end() ) {
+            return "Unknown";
+        }
+        return r->second;
     }
 
 private:
+    typedef std::unordered_map< std::string, size_t > TKnownLabels;
+    typedef std::unordered_map< size_t, std::string > TReverseLabels;
+
     DataContainer _data;
     LabelsContainer _labels;
+    size_t m_rows;
+    size_t m_cols;
+
+    TReverseLabels m_everse_labels;
 };
 }
 

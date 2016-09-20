@@ -87,6 +87,9 @@ public:
         const size_t dlen = d.size();
 
         for ( uint32_t pid = 0; pid < dlen; ++pid ) {
+            if ( pid % 10000 == 0 )
+                VLOG( 1 ) << "progress: pid = " << pid << " " << ( float( pid ) / float( dlen ) ) * 100 << "%";
+
             if ( m_labels[pid] >= 0 )
                 continue;
 
@@ -99,6 +102,8 @@ public:
 
             m_labels[pid] = cluster_id;
 
+            //VLOG( 1 ) << "pid = " << pid << " neig = " << index_neigh.size();
+
             candidates.clear();
             candidates.push_back( pid );
 
@@ -109,9 +114,12 @@ public:
 
                 for ( const auto& c_pid : candidates ) {
 
+                    // if ( m_labels[c_pid] >= 0 )
+                    //     continue;
+
                     find_neighbors( d, eps, c_pid, c_neigh );
 
-                    // std::cout << "\tAnalyzing c_pid " << c_pid << " c_Neigh size " << c_neigh.size() << std::endl;
+                    //VLOG( 1 ) << "c_pid = " << c_pid << " neig = " << c_neigh.size();
 
                     for ( const auto& nn : c_neigh ) {
 
@@ -122,7 +130,7 @@ public:
 
                         find_neighbors( d, eps, nn.first, n_neigh );
 
-                        // std::cout << "\t\tAnalyzing nn_pid " << nn.first << " nn_Neigh size " << n_neigh.size() << std::endl;
+                        // VLOG( 1 ) << "nn.first = " << nn.first << " neig = " << n_neigh.size();
 
                         if ( n_neigh.size() >= min_elems ) {
                             new_candidates.push_back( nn.first );

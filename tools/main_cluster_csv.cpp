@@ -45,17 +45,45 @@ int main( int argc, char const* argv[] )
 
     LOG( INFO ) << "Fit time " << dbs->get_fit_time() << " seconds";
 
-    dbs->predict( 0.4, 5 );
+    const uint32_t num_clusters = dbs->predict( eps, numpts );
 
     LOG( INFO ) << "Predict time " << dbs->get_predict_time() << " seconds";
 
-    std::cout << "id,cluster_id" << std::endl;
-
     const DBSCAN_VP::Labels& l = dbs->get_labels();
 
-    for ( size_t i = 0; i < l.size(); ++i ) {
-        std::cout << i << "," << l[i] << std::endl;
+    for ( ssize_t cl_id = 0; cl_id < num_clusters; ++cl_id ) {
+        std::cout << "Cluster " << cl_id << std::endl;
+        size_t cluster_total = 0;
+        for ( size_t i = 0; i < l.size(); ++i ) {
+            if ( l[i] == cl_id ) {
+                std::cout << "\t" << i << "\t" << dset->get_label( i ) << std::endl;
+                ++cluster_total;
+            }
+        }
+        if ( cluster_total ) {
+            std::cout << "Total " << cluster_total << std::endl;
+        }
     }
+
+    std::cout << "Outliers (-1)" << std::endl;
+
+    size_t cluster_total = 0;
+    for ( size_t i = 0; i < l.size(); ++i ) {
+        if ( l[i] == -1 ) {
+            std::cout << "\t" << i << "\t" << dset->get_label( i ) << std::endl;
+            ++cluster_total;
+        }
+    }
+
+    std::cout << "Total " << cluster_total << std::endl;
+
+    // std::cout << "id,cluster_id" << std::endl;
+
+    // for ( size_t i = 0; i < l.size(); ++i ) {
+    //     std::cout << i << "," << l[i] << std::endl;
+    // }
+
+    LOG( INFO ) << "Num clusters " << num_clusters;
 
     return 0;
 }

@@ -68,7 +68,7 @@ static const size_t BIG_SIZE_NUM = 0;
 static const size_t NUM_METRICS = 4;
 }
 
-TEST( DBSCAN_VP, Iris )
+TEST( DISABLED_DBSCAN_VP, Iris )
 {
     std::vector< size_t > MEASURE_SIZES_VECTOR;
     for ( size_t i = STEP_LEN; i < STEP_LEN * NUM_STEPS; i += STEP_LEN ) {

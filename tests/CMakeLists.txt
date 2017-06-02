@@ -1,7 +1,6 @@
 INCLUDE_DIRECTORIES( SYSTEM ${PROJECT_SOURCE_DIR}/glog/src/)
 INCLUDE_DIRECTORIES( SYSTEM ${PROJECT_SOURCE_DIR}/googletest/googletest/include )
 INCLUDE_DIRECTORIES( SYSTEM ${PROJECT_SOURCE_DIR}/googletest/googlemock/include )
-INCLUDE_DIRECTORIES( SYSTEM ${CUDA_INCLUDE_DIRS})
 
 SET(MAIN_TEST_CPP ${PROJECT_SOURCE_DIR}/tests/main_test.cpp)
 SET(MAIN_TEST_GPU_CPP ${PROJECT_SOURCE_DIR}/tests/main_test_gpu.cpp)
@@ -37,6 +36,7 @@ FUNCTION( setupNvTests module sources libraries )
     ADD_DEFINITIONS( -DCURRENT_BIN_DIR=\"${CMAKE_CURRENT_BINARY_DIR}/\" )
 
     INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}/.. )
+    INCLUDE_DIRECTORIES( SYSTEM ${CUDA_INCLUDE_DIRS})
 
     SET( exeName test${module} )
     CUDA_ADD_EXECUTABLE( ${exeName} ${sources} )
@@ -50,7 +50,7 @@ FUNCTION( setupNvTests module sources libraries )
 
 ADD_TEST( ${exeName} ${CMAKE_BINARY_DIR}/tests/${exeName} --gtest_output=xml:${CMAKE_BINARY_DIR}/junit/${testResultName})
 set_tests_properties(${exeName} PROPERTIES ENVIRONMENT "GLIBCXX_FORCE_NEW=1")
-ENDFUNCTION( setupTests )
+ENDFUNCTION( setupNvTests )
 
 SET( SOURCES
     ${MAIN_TEST_CPP}

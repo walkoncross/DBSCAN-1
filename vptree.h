@@ -247,6 +247,12 @@ private:
 
         const Node& node = m_nodelist[node_idx];
 
+        // node zero treshold hack
+        // double dist = 0.0;
+        // if ( node.threshold > 0.0 ) {
+        //     dist = distance( d[m_items_idx[node.index]], target );
+        // }
+
         const double dist = distance( d[m_items_idx[node.index]], target );
 
         if ( dist < t ) {
@@ -259,19 +265,27 @@ private:
 
         if ( dist < node.threshold ) {
             if ( dist - t <= node.threshold ) {
+                // LOG( INFO ) << t << " " << dist << " " << node.threshold << " "
+                //             << "LEFT " << added;
                 search_by_dist( node.left, target, nlist, t, d );
             }
 
             if ( dist + t >= node.threshold ) {
+                // LOG( INFO ) << t << " " << dist << " " << node.threshold << " "
+                //             << "RIGHT " << added;
                 search_by_dist( node.right, target, nlist, t, d );
             }
 
         } else {
             if ( dist + t >= node.threshold ) {
+                // LOG( INFO ) << t << " " << dist << " " << node.threshold << " "
+                //             << "RIGHT " << added;
                 search_by_dist( node.right, target, nlist, t, d );
             }
 
             if ( dist - t <= node.threshold ) {
+                // LOG( INFO ) << t << " " << dist << " " << node.threshold << " "
+                // << "LEFT " << added;
                 search_by_dist( node.left, target, nlist, t, d );
             }
         }

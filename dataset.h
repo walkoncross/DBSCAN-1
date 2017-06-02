@@ -94,7 +94,7 @@ public:
             if ( r == known_labels.end() ) {
                 known_labels.insert( std::make_pair( label_str, label_idx ) );
                 m_everse_labels.insert( std::make_pair( label_idx, label_str ) );
-                LOG( INFO ) << "Found new label " << label_str;
+                VLOG( 1 ) << "Found new label " << label_str;
                 ++label_idx;
             } else {
                 found_label = r->second;
@@ -143,20 +143,22 @@ public:
         return r->second;
     }
 
-    size_t num_points() const 
+    size_t num_points() const
     {
-        return m_cols*m_rows;
+        return m_cols * m_rows;
     }
 
-    size_t rows() const {
+    size_t rows() const
+    {
         return m_rows;
     }
 
-    size_t cols() const {
+    size_t cols() const
+    {
         return m_cols;
     }
 
-private:
+protected:
     typedef std::unordered_map< std::string, size_t > TKnownLabels;
     typedef std::unordered_map< size_t, std::string > TReverseLabels;
 

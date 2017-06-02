@@ -5,13 +5,17 @@ CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
 SET(CMAKE_C_FLAGS "-std=gnu99 -fPIC -pedantic -fopenmp -mtune=native")
 SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -fPIC -pedantic -fopenmp -mtune=native")
 
-set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON) 
-set(Boost_USE_STATIC_RUNTIME OFF)
+set(Boost_USE_STATIC_RUNTIME ON)
 
-FIND_PACKAGE(PythonInterp)
-FIND_PACKAGE(PythonLibs)
-find_package(Boost REQUIRED COMPONENTS program_options python)
+find_package(Boost REQUIRED COMPONENTS program_options python3 numpy3)
+
+SET(PYTHON_INCLUDE_PATH /usr/include/python3.4)
+SET(PYTHON_LIBRARIES /usr/lib/x86_64-linux-gnu/libpython3.4m.so.1)
+SET(PYTHON_EXECUTABLE /usr/bin/python3)
+SET(PYTHON_INCLUDE_DIR  /usr/include/python3.4)
+SET(PYTHONLIBS_FOUND True)
 
 if (Boost_FOUND)
     include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
@@ -37,6 +41,8 @@ add_subdirectory(googletest)
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR} 
 	/usr/include/eigen3
+	${google-glog_SOURCE_DIR}/src
+	${google-glog_BINARY_DIR}/
 	${google-glog_BINARY_DIR}/glog
 	${CMAKE_SOURCE_DIR}/eigen
 	)
@@ -54,7 +60,7 @@ if (PYTHONLIBS_FOUND AND Boost_FOUND)
 	)
 	         
 	ADD_LIBRARY(pydbscan SHARED PyDBSCAN.cpp)
-	target_link_libraries(pydbscan dbscan boost_python)
+	target_link_libraries(pydbscan dbscan glog boost_python3 boost_numpy3)
 
 	SET_TARGET_PROPERTIES(pydbscan
 		PROPERTIES
@@ -80,7 +86,11 @@ MESSAGE("CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 
 find_package(CUDA)
 
+if(${CUDA_FOUND})
+
 MESSAGE("CUDA found: ${CUDA_FOUND} CUDA version: ${CUDA_VERSION_STRING}")
+
+endif(${CUDA_FOUND})
 
 # if (${CUDA_FOUND})
 # set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --x cu")

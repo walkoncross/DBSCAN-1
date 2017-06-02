@@ -12,9 +12,6 @@ namespace {
 static const std::string CURRENT_TDIR( CURRENT_TEST_DIR );
 
 static const size_t NUM_MEASURES = 20;
-static const size_t NUM_FEATURES = 50;
-static const size_t STEP_LEN = 10000;
-static const size_t NUM_STEPS = 10;
 
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -61,32 +58,36 @@ void process_mem_usage( double& vm_usage, double& resident_set )
     resident_set = rss * page_size_kb;
 }
 
-static const size_t BIG_SIZE_START = 2000000;
-static const size_t BIG_SIZE_STEP = 1000000;
-static const size_t BIG_SIZE_NUM = 0;
-
 static const size_t NUM_METRICS = 4;
+
+static const std::vector< std::pair< size_t, std::string > > TESTSET = {
+    { 1000, CURRENT_TEST_DIR "/csv/gpu1000.csv" },
+    { 10000, CURRENT_TEST_DIR "/csv/gpu10000.csv" },
+    { 20000, CURRENT_TEST_DIR "/csv/gpu20000.csv" },
+    { 50000, CURRENT_TEST_DIR "/csv/gpu50000.csv" },
+    { 100000, CURRENT_TEST_DIR "/csv/gpu100000.csv" },
+    { 200000, CURRENT_TEST_DIR "/csv/gpu200000.csv" },
+};
 }
 
-TEST( DISABLED_DBSCAN_VP, Iris )
+TEST( DBSCAN_VP, Bench )
 {
-    std::vector< size_t > MEASURE_SIZES_VECTOR;
-    for ( size_t i = STEP_LEN; i < STEP_LEN * NUM_STEPS; i += STEP_LEN ) {
-        MEASURE_SIZES_VECTOR.push_back( i );
-    }
+    const float eps = 0.3;
+    const size_t num_pts = 10;
 
-    for ( size_t i = BIG_SIZE_START; i < ( BIG_SIZE_START + ( BIG_SIZE_STEP * BIG_SIZE_NUM ) ); i += BIG_SIZE_STEP ) {
-        MEASURE_SIZES_VECTOR.push_back( i );
+    std::vector< size_t > MEASURE_SIZES_VECTOR;
+    for ( size_t i = 0; i < TESTSET.size(); ++i ) {
+        MEASURE_SIZES_VECTOR.push_back( TESTSET[i].first );
     }
 
     Eigen::MatrixXd means( MEASURE_SIZES_VECTOR.size(), NUM_METRICS );
 
     for ( size_t j = 0; j < MEASURE_SIZES_VECTOR.size(); ++j ) {
-        const size_t vsz = MEASURE_SIZES_VECTOR[j];
-
-        LOG( INFO ) << "Data matrix size " << NUM_FEATURES << "x" << vsz;
         Dataset::Ptr dset = Dataset::create();
-        dset->gen_cluster_data( NUM_FEATURES, vsz );
+
+        dset->load_csv( TESTSET[j].second );
+
+        LOG( INFO ) << "Data matrix size " << dset->rows() << "x" << dset->cols();
 
         Eigen::MatrixXd measures( NUM_MEASURES, NUM_METRICS );
 
@@ -94,7 +95,7 @@ TEST( DISABLED_DBSCAN_VP, Iris )
             DBSCAN_VP::Ptr dbs = boost::make_shared< DBSCAN_VP >( dset );
 
             dbs->fit();
-            dbs->predict( 0.01, 5 );
+            dbs->predict( eps, num_pts );
 
             measures( i, 0 ) = dbs->get_fit_time();
             measures( i, 1 ) = dbs->get_predict_time();

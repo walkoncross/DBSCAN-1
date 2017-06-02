@@ -51,16 +51,18 @@ public:
     {
         const Dataset::DataContainer& d = m_dset->data();
 
-        std::vector< double > r;
-        r.reserve( d.size() );
+        std::vector< double > r( d.size(), 0.0 );
 
-        TVpTree::TNeighborsList nlist;
+        omp_set_dynamic( 1 );
 
+#pragma omp parallel for
         for ( size_t i = 0; i < d.size(); ++i ) {
+            TVpTree::TNeighborsList nlist;
+
             m_vp_tree->search_by_k( d[i], k, nlist, true );
 
             if ( nlist.size() >= k ) {
-                r.push_back( nlist[0].second );
+                r[i] = nlist[0].second;
             }
         }
 
@@ -72,14 +74,13 @@ public:
     uint32_t predict( double eps, size_t min_elems )
     {
 
-        std::vector< uint32_t > candidates;
-        std::vector< uint32_t > new_candidates;
+        std::unique_ptr< std::vector< uint32_t > > candidates( new std::vector< uint32_t >() );
+        std::unique_ptr< std::vector< uint32_t > > new_candidates( new std::vector< uint32_t >() );
 
-        uint32_t cluster_id = 0;
+        int32_t cluster_id = 0;
 
         TVpTree::TNeighborsList index_neigh;
         TVpTree::TNeighborsList n_neigh;
-        TVpTree::TNeighborsList c_neigh;
 
         const double start = omp_get_wtime();
 
@@ -95,7 +96,7 @@ public:
 
             find_neighbors( d, eps, pid, index_neigh );
 
-            // std::cout << "Analyzing pid " << pid << " Neigh size " << index_neigh.size() << std::endl;
+            VLOG( 1 ) << "Analyzing pid " << pid << " Neigh size " << index_neigh.size();
 
             if ( index_neigh.size() < min_elems )
                 continue;
@@ -104,43 +105,75 @@ public:
 
             //VLOG( 1 ) << "pid = " << pid << " neig = " << index_neigh.size();
 
-            candidates.clear();
-            candidates.push_back( pid );
+            candidates->clear();
 
-            while ( candidates.size() > 0 ) {
+            for ( const auto& nn : index_neigh ) {
+
+                if ( m_labels[nn.first] >= 0 )
+                    continue;
+
+                m_labels[nn.first] = cluster_id;
+
+                // find_neighbors( d, eps, nn.first, n_neigh );
+
+                // VLOG( 1 ) << "nn.first = " << nn.first << " neig = " << n_neigh.size();
+
+                // if ( n_neigh.size() >= min_elems ) {
+                candidates->push_back( nn.first );
+                // }
+            }
+
+            while ( candidates->size() > 0 ) {
                 // std::cout << "\tcandidates = " << candidates.size() << std::endl;
+                VLOG( 1 ) << "candidates size " << candidates->size();
 
-                new_candidates.clear();
+                new_candidates->clear();
 
-                for ( const auto& c_pid : candidates ) {
+                const float csize = float( candidates->size() );
 
-                    // if ( m_labels[c_pid] >= 0 )
+#pragma omp parallel for ordered schedule( dynamic )
+                for ( size_t j = 0; j < candidates->size(); ++j ) {
+                    // for ( const auto& c_pid : *candidates ) {
+                    TVpTree::TNeighborsList c_neigh;
+                    const uint32_t c_pid = candidates->at( j );
+
+                    // VLOG( 1 ) << "c_pid = " << c_pid << " " << m_labels[c_pid];
+
+                    // if ( m_labels[c_pid] >= 0 && m_labels[c_pid] != cluster_id )
                     //     continue;
 
                     find_neighbors( d, eps, c_pid, c_neigh );
 
-                    //VLOG( 1 ) << "c_pid = " << c_pid << " neig = " << c_neigh.size();
+                    if ( c_neigh.size() < min_elems )
+                        continue;
 
-                    for ( const auto& nn : c_neigh ) {
+// VLOG( 1 ) << "c_pid = " << c_pid << " neig = " << c_neigh.size();
+#pragma omp ordered
+                    {
+                        for ( const auto& nn : c_neigh ) {
 
-                        if ( m_labels[nn.first] >= 0 )
-                            continue;
+                            if ( m_labels[nn.first] >= 0 )
+                                continue;
 
-                        m_labels[nn.first] = cluster_id;
+                            m_labels[nn.first] = cluster_id;
 
-                        find_neighbors( d, eps, nn.first, n_neigh );
+                            // find_neighbors( d, eps, nn.first, n_neigh );
 
-                        // VLOG( 1 ) << "nn.first = " << nn.first << " neig = " << n_neigh.size();
+                            // VLOG( 1 ) << "nn.first = " << nn.first << " neig = " << n_neigh.size();
 
-                        if ( n_neigh.size() >= min_elems ) {
-                            new_candidates.push_back( nn.first );
+                            // if ( n_neigh.size() >= min_elems ) {
+
+                            new_candidates->push_back( nn.first );
                         }
+                        if ( j % 1000 == 0 )
+                            VLOG( 1 ) << "sub progress: j = " << j << " " << ( float( j ) / csize ) * 100 << "% " << new_candidates->size();
                     }
+                    // }
                 }
 
-                // std::cout << "\tnew candidates = " << new_candidates.size() << std::endl;
+                VLOG( 1 ) << "new candidates = " << new_candidates->size();
 
-                candidates = new_candidates;
+                std::swap( candidates, new_candidates );
             }
             ++cluster_id;
         }

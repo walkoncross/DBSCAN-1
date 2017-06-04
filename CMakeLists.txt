@@ -2,7 +2,7 @@ project(DBSCAN)
 
 CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
 
-SET(CMAKE_C_FLAGS "-std=gnu99 -pedantic -fPIC -pedantic -fopenmp -mtune=native")
+SET(CMAKE_C_FLAGS "-std=gnu99 -fPIC -pedantic -fopenmp -mtune=native")
 SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -fPIC -pedantic -fopenmp -mtune=native")
 
 set(Boost_USE_STATIC_LIBS OFF)
@@ -75,8 +75,16 @@ endif(PYTHONLIBS_FOUND AND Boost_FOUND)
 
 enable_testing()
 
-add_subdirectory(tests)
-add_subdirectory(tools)
-
 MESSAGE("CMAKE_C_FLAGS ${CMAKE_C_FLAGS}")
 MESSAGE("CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
+
+find_package(CUDA)
+
+MESSAGE("CUDA found: ${CUDA_FOUND} CUDA version: ${CUDA_VERSION_STRING}")
+
+# if (${CUDA_FOUND})
+# set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --x cu")
+# endif()
+
+add_subdirectory(tests)
+add_subdirectory(tools)

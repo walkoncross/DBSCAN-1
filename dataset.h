@@ -143,6 +143,19 @@ public:
         return r->second;
     }
 
+    size_t num_points() const 
+    {
+        return m_cols*m_rows;
+    }
+
+    size_t rows() const {
+        return m_rows;
+    }
+
+    size_t cols() const {
+        return m_cols;
+    }
+
 private:
     typedef std::unordered_map< std::string, size_t > TKnownLabels;
     typedef std::unordered_map< size_t, std::string > TReverseLabels;

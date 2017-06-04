@@ -1,3 +1,26 @@
+// Guilherme Andrade, Gabriel Ramos, Daniel Madeira, Rafael Sachetto, Renato
+// Ferreira, Leonardo Rocha, G-DBSCAN: A GPU Accelerated Algorithm for
+// Density-based Clustering, Procedia Computer Science, Volume 18, 2013, Pages
+// 369-378, ISSN 1877-0509, http://dx.doi.org/10.1016/j.procs.2013.05.200.
+// (http://www.sciencedirect.com/science/article/pii/S1877050913003438)
+// Abstract: With the advent of Web 2.0, we see a new and differentiated
+// scenario: there is more data than that can be effectively analyzed.
+// Organizing this data has become one of the biggest problems in Computer
+// Science. Many algorithms have been proposed for this purpose, highlighting
+// those related to the Data Mining area, specifically the clustering
+// algorithms. However, these algo- rithms are still a computational challenge
+// because of the volume of data that needs to be processed. We found in the
+// literature some proposals to make these algorithms feasible, and, recently,
+// those related to parallelization on graphics processing units (GPUs) have
+// presented good results. In this work we present the G-DBSCAN, a GPU parallel
+// version of one of the most widely used clustering algorithms, the DBSCAN.
+// Although there are other parallel versions of this algorithm, our technique
+// distinguishes itself by the simplicity with which the data are indexed, using
+// graphs, allowing various parallelization opportu- nities to be explored. In
+// our evaluation we show that the G-DBSCAN using GPU, can be over 100x faster
+// than its sequential version using CPU. Keywords: Clustering; Dbscan; Parallel
+// computing; GPU
+
 #ifndef G_DBSCAN
 #define G_DBSCAN
 

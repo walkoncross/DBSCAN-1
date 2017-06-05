@@ -96,7 +96,7 @@ public:
 
             find_neighbors( d, eps, pid, index_neigh );
 
-            VLOG( 1 ) << "Analyzing pid " << pid << " Neigh size " << index_neigh.size();
+            // VLOG( 1 ) << "Analyzing pid " << pid << " Neigh size " << index_neigh.size();
 
             if ( index_neigh.size() < min_elems )
                 continue;

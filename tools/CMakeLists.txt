@@ -3,6 +3,9 @@ INCLUDE_DIRECTORIES( SYSTEM ${google-glog_BINARY_DIR} ${PROJECT_SOURCE_DIR}/glog
 add_executable(cluster_csv main_cluster_csv.cpp)
 target_link_libraries(cluster_csv ${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE} glog )
 
+add_executable(graph_cluster_csv main_graph_cluster_csv.cpp)
+target_link_libraries(graph_cluster_csv ${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE} glog )
+
 add_executable(knn_dist main_knn_dist.cpp)
 target_link_libraries(knn_dist ${Boost_PROGRAM_OPTIONS_LIBRARY_RELEASE} glog)
 

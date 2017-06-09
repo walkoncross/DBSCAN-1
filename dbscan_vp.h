@@ -12,11 +12,10 @@ private:
         return ( p1 - p2 ).norm();
     }
 
-    typedef VPTREE< Eigen::VectorXf, dist > TVpTree;
-
     const Dataset::Ptr m_dset;
 
 public:
+    typedef VPTREE< Eigen::VectorXf, dist > TVpTree;
     typedef std::vector< int32_t > Labels;
     typedef boost::shared_ptr< DBSCAN_VP > Ptr;
 
@@ -29,6 +28,11 @@ public:
 
     ~DBSCAN_VP()
     {
+    }
+
+    TVpTree::Ptr get_vp() const
+    {
+        return m_vp_tree;
     }
 
     void fit()

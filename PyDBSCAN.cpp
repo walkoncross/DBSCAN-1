@@ -2,6 +2,7 @@
 #include <boost/python/numpy.hpp>
 #include "dbscan.h"
 #include "dbscan_vp.h"
+#include "dbscan_graph.h"
 
 using namespace boost::python;
 using namespace clustering;
@@ -182,9 +183,103 @@ public:
         return rnd;
     }
 
+    const np::ndarray query_radius( const np::ndarray& in, double eps )
+    {
+        DBSCAN_VP::TVpTree::Ptr vpt = m_dbs->get_vp();
+
+        size_t rows = in.shape( 0 );
+
+        Eigen::VectorXf col_vector( rows );
+        for ( size_t j = 0; j < rows; ++j ) {
+            col_vector( j ) = p::extract< float >( in[j] );
+        }
+
+        DBSCAN_VP::TVpTree::TNeighborsList neigh;
+
+        vpt->search_by_dist( col_vector, eps, neigh );
+
+        np::dtype dtype = np::dtype::get_builtin< uint32_t >();
+        p::tuple shape = p::make_tuple( neigh.size() );
+
+        np::ndarray rnd = np::zeros( shape, dtype );
+
+        for ( size_t j = 0; j < neigh.size(); ++j ) {
+            rnd[j] = neigh[j].first;
+        }
+
+        return rnd;
+    }
+
 private:
     size_t m_rows;
     DBSCAN_VP::Ptr m_dbs;
+};
+
+class PyDBSCANgraph {
+public:
+    PyDBSCANgraph( const np::ndarray& d )
+        : m_rows( 0 )
+    {
+        npDataset::Ptr np_dset = boost::make_shared< npDataset >();
+        np_dset->load_ndarray( d );
+
+        m_rows = np_dset->rows();
+        m_dbs = boost::make_shared< DBSCAN_GRAPH >( np_dset );
+    }
+
+    const np::ndarray predict( float eps, size_t min_elems )
+    {
+        np::dtype dtype = np::dtype::get_builtin< int32_t >();
+        p::tuple shape = p::make_tuple( m_rows );
+
+        np::ndarray rnd = np::zeros( shape, dtype );
+
+        m_dbs->fit( eps, min_elems );
+
+        m_dbs->predict();
+
+        const DBSCAN_GRAPH::Labels& labels = m_dbs->get_labels();
+
+        for ( size_t i = 0; i < labels.size(); ++i ) {
+            rnd[i] = labels[i];
+        }
+
+        return rnd;
+    }
+
+    const np::ndarray get_Va0()
+    {
+        np::dtype dtype = np::dtype::get_builtin< uint32_t >();
+        p::tuple shape = p::make_tuple( m_rows );
+
+        np::ndarray rnd = np::zeros( shape, dtype );
+
+        const std::vector< uint32_t > r = m_dbs->get_Va0();
+
+        for ( size_t i = 0; i < r.size(); ++i ) {
+            rnd[i] = r[i];
+        }
+        return rnd;
+    }
+
+    const np::ndarray get_Va1()
+    {
+        np::dtype dtype = np::dtype::get_builtin< uint64_t >();
+        p::tuple shape = p::make_tuple( m_rows );
+
+        np::ndarray rnd = np::zeros( shape, dtype );
+
+        const std::vector< uint64_t > r = m_dbs->get_Va1();
+
+        for ( size_t i = 0; i < r.size(); ++i ) {
+            rnd[i] = r[i];
+        }
+        return rnd;
+    }
+
+private:
+    size_t m_rows;
+    DBSCAN_GRAPH::Ptr m_dbs;
 };
 
 BOOST_PYTHON_MODULE( pydbscan )
@@ -202,7 +297,13 @@ BOOST_PYTHON_MODULE( pydbscan )
 
     class_< PyDBSCANvp >( "DBSCANvp", p::init< np::ndarray >() )
         .def( "predict", &PyDBSCANvp::predict )
-        .def( "predict_eps", &PyDBSCANvp::predict_eps );
+        .def( "predict_eps", &PyDBSCANvp::predict_eps )
+        .def( "query_radius", &PyDBSCANvp::query_radius );
+
+    class_< PyDBSCANgraph >( "DBSCANgraph", p::init< np::ndarray >() )
+        .def( "predict", &PyDBSCANgraph::predict )
+        .def( "get_Va0", &PyDBSCANgraph::get_Va0 )
+        .def( "get_Va1", &PyDBSCANgraph::get_Va1 );
 
     to_python_converter< DBSCAN::ClusterData, ublas_matrix_to_python, false >();
 }

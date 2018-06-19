@@ -2,11 +2,12 @@
 
 #include <cuda.h>
 
-namespace {
-bool
-has_nonzero(std::vector<int>& v)
+namespace
 {
-  for (size_t i = 0; i < v.size(); ++i) {
+bool has_nonzero(std::vector<int> &v)
+{
+  for (size_t i = 0; i < v.size(); ++i)
+  {
     if (v[i] > 0)
       return true;
   }
@@ -14,60 +15,53 @@ has_nonzero(std::vector<int>& v)
 }
 }
 
-namespace clustering {
+namespace clustering
+{
 
 GDBSCAN::GDBSCAN(const Dataset::Ptr dset)
-  : m_dset(dset)
-  , d_data(0)
-  , vA_size(sizeof(int) * dset->rows())
-  , d_Va0(0)
-  , d_Va1(0)
-  , h_Va0(dset->rows(), 0)
-  , h_Va1(dset->rows(), 0)
-  , d_Ea(0)
-  , d_Fa(0)
-  , d_Xa(0)
-  , m_fit_time(.0)
-  , m_predict_time(.0)
-  , core(dset->rows(), false)
-  , labels(dset->rows(), -1)
+    : m_dset(dset), d_data(0), vA_size(sizeof(int) * dset->rows()), d_Va0(0), d_Va1(0), h_Va0(dset->rows(), 0), h_Va1(dset->rows(), 0), d_Ea(0), d_Fa(0), d_Xa(0), m_fit_time(.0), m_predict_time(.0), core(dset->rows(), false), labels(dset->rows(), -1)
 {
 
   size_t alloc_size = sizeof(float) * m_dset->num_points();
-  cudaError_t r = cudaMalloc(reinterpret_cast<void**>(&d_data), alloc_size);
+  cudaError_t r = cudaMalloc(reinterpret_cast<void **>(&d_data), alloc_size);
 
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda d_data malloc error :" + std::to_string(r));
   }
 
   LOG(INFO) << "Allocated " << alloc_size << " bytes on device for "
             << m_dset->num_points() << " points";
 
-  r = cudaMalloc(reinterpret_cast<void**>(&d_Va0), vA_size);
+  r = cudaMalloc(reinterpret_cast<void **>(&d_Va0), vA_size);
 
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda d_Va0 malloc error :" + std::to_string(r));
   }
 
-  r = cudaMalloc(reinterpret_cast<void**>(&d_Va1), vA_size);
+  r = cudaMalloc(reinterpret_cast<void **>(&d_Va1), vA_size);
 
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda d_Va1 malloc error :" + std::to_string(r));
   }
 
   LOG(INFO) << "Allocated " << vA_size << " bytes on device for Va0 and Va1";
 
-  r = cudaMalloc(reinterpret_cast<void**>(&d_Fa), vA_size);
+  r = cudaMalloc(reinterpret_cast<void **>(&d_Fa), vA_size);
 
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda d_Fa malloc error :" + std::to_string(r));
   }
 
   LOG(INFO) << "Allocated " << vA_size << " bytes on device for d_Fa";
 
-  r = cudaMalloc(reinterpret_cast<void**>(&d_Xa), vA_size);
+  r = cudaMalloc(reinterpret_cast<void **>(&d_Xa), vA_size);
 
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda d_Xa malloc error :" + std::to_string(r));
   }
 
@@ -76,13 +70,15 @@ GDBSCAN::GDBSCAN(const Dataset::Ptr dset)
   const size_t cols = m_dset->cols();
   size_t copysize = cols * sizeof(float);
 
-  for (size_t i = 0; i < m_dset->rows(); ++i) {
+  for (size_t i = 0; i < m_dset->rows(); ++i)
+  {
     r = cudaMemcpy(d_data + i * cols,
                    m_dset->data()[i].data(),
                    copysize,
                    cudaMemcpyHostToDevice);
 
-    if (r != cudaSuccess) {
+    if (r != cudaSuccess)
+    {
       throw std::runtime_error("Cuda memcpy error :" + std::to_string(r));
     }
     VLOG(3) << "Copied " << i << "th row to device, size = " << copysize;
@@ -91,54 +87,63 @@ GDBSCAN::GDBSCAN(const Dataset::Ptr dset)
 
 GDBSCAN::~GDBSCAN()
 {
-  if (d_data) {
+  if (d_data)
+  {
     cudaFree(d_data);
     d_data = 0;
   }
 
-  if (d_Va0) {
+  if (d_Va0)
+  {
     cudaFree(d_Va0);
     d_Va0 = 0;
   }
 
-  if (d_Va1) {
+  if (d_Va1)
+  {
     cudaFree(d_Va1);
     d_Va1 = 0;
   }
 
-  if (d_Ea) {
+  if (d_Ea)
+  {
     cudaFree(d_Ea);
     d_Ea = 0;
   }
 
-  if (d_Fa) {
+  if (d_Fa)
+  {
     cudaFree(d_Fa);
     d_Fa = 0;
   }
 
-  if (d_Xa) {
+  if (d_Xa)
+  {
     cudaFree(d_Xa);
     d_Xa = 0;
   }
 }
 
-void
-GDBSCAN::Va_device_to_host()
+void GDBSCAN::Va_device_to_host()
 {
   cudaError_t r = cudaMemcpy(&h_Va0[0], d_Va0, vA_size, cudaMemcpyDeviceToHost);
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda memcpy Va0 device to host error :" +
                              std::to_string(r));
   }
   r = cudaMemcpy(&h_Va1[0], d_Va1, vA_size, cudaMemcpyDeviceToHost);
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda memcpy Va1 device to host error :" +
                              std::to_string(r));
   }
 }
 
-void
-GDBSCAN::fit(float eps, size_t min_elems)
+// dist_type:
+//      0 - L2 distance;
+//      otherwise - cosine distance, input features must be normalized beforehands.
+void GDBSCAN::fit(float eps, size_t min_elems, int dist_type = 0)
 {
   const double start = omp_get_wtime();
   // First Step (Vertices degree calculation): For each vertex, we calculate the
@@ -184,8 +189,10 @@ GDBSCAN::fit(float eps, size_t min_elems)
 
   LOG(INFO) << "Finished transfer";
 
-  for (int i = 0; i < N; ++i) {
-    if (static_cast<size_t>(h_Va0[i]) >= min_elems) {
+  for (int i = 0; i < N; ++i)
+  {
+    if (static_cast<size_t>(h_Va0[i]) >= min_elems)
+    {
       core[i] = true;
     }
   }
@@ -201,20 +208,22 @@ GDBSCAN::fit(float eps, size_t min_elems)
   // second value of Va, and has an offset related to the degree of the vertex.
 
   size_t Ea_size =
-    static_cast<size_t>(h_Va0[h_Va0.size() - 1] + h_Va1[h_Va1.size() - 1]) *
-    sizeof(int);
+      static_cast<size_t>(h_Va0[h_Va0.size() - 1] + h_Va1[h_Va1.size() - 1]) *
+      sizeof(int);
 
   LOG(INFO) << "Allocating " << Ea_size << " bytes for Ea "
             << h_Va0[h_Va0.size() - 1] << "+" << h_Va1[h_Va1.size() - 1];
 
-  if (d_Ea) {
+  if (d_Ea)
+  {
     cudaFree(d_Ea);
     d_Ea = 0;
   }
 
-  cudaError_t r = cudaMalloc(reinterpret_cast<void**>(&d_Ea), Ea_size);
+  cudaError_t r = cudaMalloc(reinterpret_cast<void **>(&d_Ea), Ea_size);
 
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda d_Ea malloc error :" + std::to_string(r));
   }
 
@@ -225,45 +234,45 @@ GDBSCAN::fit(float eps, size_t min_elems)
   LOG(INFO) << "Executed asmadjlist transfer";
 }
 
-void
-GDBSCAN::Fa_Xa_to_device(const std::vector<int>& Fa, const std::vector<int>& Xa)
+void GDBSCAN::Fa_Xa_to_device(const std::vector<int> &Fa, const std::vector<int> &Xa)
 {
   cudaError_t r = cudaMemcpy(d_Fa, &Fa[0], vA_size, cudaMemcpyHostToDevice);
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda memcpy Fa host to device :" +
                              std::to_string(r));
   }
   r = cudaMemcpy(d_Xa, &Xa[0], vA_size, cudaMemcpyHostToDevice);
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda memcpy Xa host to device :" +
                              std::to_string(r));
   }
 }
 
-void
-GDBSCAN::Xa_to_host(std::vector<int>& Xa)
+void GDBSCAN::Xa_to_host(std::vector<int> &Xa)
 {
   cudaError_t r = cudaMemcpy(&Xa[0], d_Xa, vA_size, cudaMemcpyDeviceToHost);
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda memcpy Xa device to host :" +
                              std::to_string(r));
   }
 }
 
-void
-GDBSCAN::Fa_to_host(std::vector<int>& Fa)
+void GDBSCAN::Fa_to_host(std::vector<int> &Fa)
 {
   cudaError_t r = cudaMemcpy(&Fa[0], d_Fa, vA_size, cudaMemcpyDeviceToHost);
-  if (r != cudaSuccess) {
+  if (r != cudaSuccess)
+  {
     throw std::runtime_error("Cuda memcpy Fa device to host :" +
                              std::to_string(r));
   }
 }
 
-void
-GDBSCAN::breadth_first_search(int i,
-                              int32_t cluster,
-                              std::vector<bool>& visited)
+void GDBSCAN::breadth_first_search(int i,
+                                   int32_t cluster,
+                                   std::vector<bool> &visited)
 {
   int N = static_cast<int>(m_dset->rows());
 
@@ -274,15 +283,18 @@ GDBSCAN::breadth_first_search(int i,
 
   Fa_Xa_to_device(Fa, Xa);
 
-  while (has_nonzero(Fa)) {
+  while (has_nonzero(Fa))
+  {
     breadth_first_search_kern(N, d_Ea, d_Va0, d_Va1, d_Fa, d_Xa);
     Fa_to_host(Fa);
   }
 
   Xa_to_host(Xa);
 
-  for (size_t j = 0; j < m_dset->rows(); ++j) {
-    if (Xa[j]) {
+  for (size_t j = 0; j < m_dset->rows(); ++j)
+  {
+    if (Xa[j])
+    {
       visited[j] = true;
       labels[j] = cluster;
       // LOG(INFO) << "Assigning " << j << " " << cluster;
@@ -317,7 +329,8 @@ GDBSCAN::predict()
 
   const double start = omp_get_wtime();
 
-  for (size_t i = 0; i < m_dset->rows(); ++i) {
+  for (size_t i = 0; i < m_dset->rows(); ++i)
+  {
     if (visited[i])
       continue;
     if (!core[i])
@@ -334,7 +347,7 @@ GDBSCAN::predict()
   return cluster;
 }
 
-const GDBSCAN::Labels&
+const GDBSCAN::Labels &
 GDBSCAN::get_labels()
 {
   return labels;

@@ -162,7 +162,7 @@ void GDBSCAN::fit(float eps, size_t min_elems, int dist_type = 0)
   LOG(INFO) << "Starting vertdegree on " << N << "x" << colsize << " "
             << (N + 255) / 256 << "x" << 256;
 
-  vertdegree(N, colsize, eps, d_data, d_Va0);
+  vertdegree(N, colsize, eps, d_data, d_Va0, dist_type);
 
   LOG(INFO) << "Executed vertdegree transfer";
 
@@ -227,7 +227,7 @@ void GDBSCAN::fit(float eps, size_t min_elems, int dist_type = 0)
     throw std::runtime_error("Cuda d_Ea malloc error :" + std::to_string(r));
   }
 
-  asmadjlist(N, colsize, eps, d_data, d_Va1, d_Ea);
+  asmadjlist(N, colsize, eps, d_data, d_Va1, d_Ea, dist_type);
 
   m_fit_time = omp_get_wtime() - start;
 

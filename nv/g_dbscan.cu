@@ -88,6 +88,34 @@ _cu_asmadjlist(int numpts, int colsize, float eps, float *d_data, int *d_Va1, in
 }
 
 __global__ void
+_cu_asmadjlist_cosine(int numpts, int colsize, float eps, float *d_data, int *d_Va1, int *d_Ea)
+{
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+  if (i >= numpts)
+    return;
+
+  int basei = d_Va1[i];
+
+  for (int j = 0; j < numpts; ++j)
+  {
+    float accum = 0.0;
+    for (int cs = 0; cs < colsize; ++cs)
+    {
+      accum += (d_data[i * colsize + cs] * d_data[j * colsize + cs]);
+    }
+
+    // accum = sqrtf(accum);
+
+    if (accum < eps)
+    {
+      d_Ea[basei] = j;
+      ++basei;
+    }
+  }
+}
+
+__global__ void
 _cu_breadth_first_search_kern(int numpts, int *d_Ea, int *d_Va0, int *d_Va1, int *d_Fa, int *d_Xa)
 {
   int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -139,10 +167,18 @@ void adjlistsind(int N, int *Va0, int *Va1)
   cudaDeviceSynchronize();
 }
 
-void asmadjlist(int N, int colsize, float eps, float *d_data, int *d_Va1, int *d_Ea)
+void asmadjlist(int N, int colsize, float eps, float *d_data, int *d_Va1, int *d_Ea, int dist_type = 0)
 {
-  _cu_asmadjlist<<<(N + 255) / 256, 256>>>(N, colsize, eps, d_data, d_Va1, d_Ea);
-  cudaDeviceSynchronize();
+  if (dist_type == 0)
+  {
+    _cu_asmadjlist<<<(N + 255) / 256, 256>>>(N, colsize, eps, d_data, d_Va1, d_Ea);
+    cudaDeviceSynchronize();
+  }
+  else
+  {
+    _cu_asmadjlist_cosine<<<(N + 255) / 256, 256>>>(N, colsize, eps, d_data, d_Va1, d_Ea);
+    cudaDeviceSynchronize();
+  }
 }
 
 void breadth_first_search_kern(int N, int *d_Ea, int *d_Va0, int *d_Va1, int *d_Fa, int *d_Xa)

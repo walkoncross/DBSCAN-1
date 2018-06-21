@@ -2,8 +2,12 @@ project(DBSCAN)
 
 CMAKE_MINIMUM_REQUIRED( VERSION 2.8 )
 
-SET(CMAKE_C_FLAGS "-std=gnu99 -fPIC -pedantic -fopenmp -mtune=native")
-SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -fPIC -pedantic -fopenmp -mtune=native")
+#SET(CMAKE_C_FLAGS "-std=gnu99 -fPIC -pedantic -fopenmp -mtune=native")
+#SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -fPIC -pedantic -fopenmp -mtune=native")
+
+# remove option "-pedantic" to avoid compiler errors
+SET(CMAKE_C_FLAGS "-std=gnu99 -fPIC -fopenmp -mtune=native")
+SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -fPIC -fopenmp -mtune=native")
 
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON) 
@@ -74,10 +78,9 @@ endif(PYTHONLIBS_FOUND AND Boost_FOUND)
 
 # add_executable(vptree main_vptree.cpp)
 
-
-
 # add_executable(dset_test dataset_test.cpp)
 # add_executable(dbscan_vp test_dbscan_vp.cpp)
+# add_executable(dbscan_vp_cosine test_dbscan_vp_cosine.cpp)
 
 enable_testing()
 

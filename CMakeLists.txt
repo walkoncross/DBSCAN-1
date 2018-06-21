@@ -13,12 +13,14 @@ set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON) 
 set(Boost_USE_STATIC_RUNTIME ON)
 
-find_package(Boost REQUIRED COMPONENTS program_options python3 numpy3)
+# find_package(Boost REQUIRED COMPONENTS program_options python3 numpy3)
+# remove boost.numpy because it's now included in boost.python
+find_package(Boost REQUIRED COMPONENTS program_options python3)
 
-SET(PYTHON_INCLUDE_PATH /usr/include/python3.4)
-SET(PYTHON_LIBRARIES /usr/lib/x86_64-linux-gnu/libpython3.4m.so.1)
+SET(PYTHON_INCLUDE_PATH /usr/include/python3.5)
+SET(PYTHON_LIBRARIES /usr/lib/x86_64-linux-gnu/libpython3.5m.so.1)
 SET(PYTHON_EXECUTABLE /usr/bin/python3)
-SET(PYTHON_INCLUDE_DIR  /usr/include/python3.4)
+SET(PYTHON_INCLUDE_DIR  /usr/include/python3.5)
 SET(PYTHONLIBS_FOUND True)
 
 if (Boost_FOUND)

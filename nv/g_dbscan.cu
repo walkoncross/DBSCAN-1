@@ -106,6 +106,7 @@ _cu_asmadjlist_cosine(int numpts, int colsize, float eps, float *d_data, int *d_
     }
 
     // accum = sqrtf(accum);
+    accum = 1.0 - accum; // cosine similarity to cosine distance; fixed by zhaoyafei 20180621
 
     if (accum < eps)
     {

@@ -177,13 +177,12 @@ const DBSCAN::DistanceMatrix DBSCAN::calc_cosine_dist_matrix(const DBSCAN::Clust
             ublas::matrix_row<DBSCAN::ClusterData> row(cl_d, i);
 
             double vec_norm = ublas::norm2(row);
-            double scale = 1.0;
             if (vec_norm > 0.0)
             {
-                scale = 1.0 / vec_norm
-            }
+                double scale = 1.0 / vec_norm;
 
-            row *= scale;
+                row *= scale;
+            }
         }
     }
 
@@ -207,10 +206,8 @@ const DBSCAN::DistanceMatrix DBSCAN::calc_cosine_dist_matrix(const DBSCAN::Clust
                 ublas::matrix_row<DBSCAN::ClusterData> V(cl_d, j);
 
                 int k = 0;
-                for (const auto e : (U * V))
-                {
-                    d_m(i, j) += e * W[k++];
-                }
+                auto inner_prod = ublas::inner_prod(U, V);
+                d_m(i, j) += e * W[k++];
 
                 d_m(i, j) = 1.0f - d_m(i, j);
                 d_m(j, i) = d_m(i, j);

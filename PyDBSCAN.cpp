@@ -2,6 +2,7 @@
 #include <boost/python/numpy.hpp>
 #include "dbscan.h"
 #include "dbscan_vp.h"
+#include "dbscan_vp_cosine.h"
 #include "dbscan_graph.h"
 
 using namespace boost::python;
@@ -256,6 +257,89 @@ class PyDBSCANvp
     DBSCAN_VP::Ptr m_dbs;
 };
 
+class PyDBSCANvp_cosine
+{
+  public:
+    PyDBSCANvp_cosine(const np::ndarray &d)
+        : m_rows(0)
+    {
+        npDataset::Ptr np_dset = boost::make_shared<npDataset>();
+        np_dset->load_ndarray(d);
+
+        m_dbs = boost::make_shared<DBSCAN_VP_COSINE>(np_dset);
+        m_dbs->fit();
+        m_rows = np_dset->rows();
+    }
+
+    const np::ndarray predict(double eps, size_t min_elems)
+    {
+        np::dtype dtype = np::dtype::get_builtin<int32_t>();
+        p::tuple shape = p::make_tuple(m_rows);
+
+        np::ndarray rnd = np::zeros(shape, dtype);
+
+        m_dbs->predict(eps, min_elems);
+
+        const DBSCAN_VP_COSINE::Labels &labels = m_dbs->get_labels();
+
+        for (size_t i = 0; i < labels.size(); ++i)
+        {
+            rnd[i] = labels[i];
+        }
+
+        return rnd;
+    }
+
+    const np::ndarray predict_eps(size_t k)
+    {
+        np::dtype dtype = np::dtype::get_builtin<float>();
+        p::tuple shape = p::make_tuple(m_rows);
+
+        np::ndarray rnd = np::zeros(shape, dtype);
+
+        const std::vector<double> r = m_dbs->predict_eps(k);
+
+        for (size_t i = 0; i < r.size(); ++i)
+        {
+            rnd[i] = r[i];
+        }
+        return rnd;
+    }
+
+    const np::ndarray query_radius(const np::ndarray &in, double eps)
+    {
+        DBSCAN_VP_COSINE::TVpTree::Ptr vpt = m_dbs->get_vp();
+
+        size_t rows = in.shape(0);
+
+        Eigen::VectorXf col_vector(rows);
+        for (size_t j = 0; j < rows; ++j)
+        {
+            col_vector(j) = p::extract<float>(in[j]);
+        }
+
+        DBSCAN_VP_COSINE::TVpTree::TNeighborsList neigh;
+
+        vpt->search_by_dist(col_vector, eps, neigh);
+
+        np::dtype dtype = np::dtype::get_builtin<uint32_t>();
+        p::tuple shape = p::make_tuple(neigh.size());
+
+        np::ndarray rnd = np::zeros(shape, dtype);
+
+        for (size_t j = 0; j < neigh.size(); ++j)
+        {
+            rnd[j] = neigh[j].first;
+        }
+
+        return rnd;
+    }
+
+  private:
+    size_t m_rows;
+    DBSCAN_VP_COSINE::Ptr m_dbs;
+};
+
 class PyDBSCANgraph
 {
   public:
@@ -348,6 +432,11 @@ BOOST_PYTHON_MODULE(pydbscan)
         .def("predict", &PyDBSCANvp::predict)
         .def("predict_eps", &PyDBSCANvp::predict_eps)
         .def("query_radius", &PyDBSCANvp::query_radius);
+
+    class_<PyDBSCANvp_cosine>("DBSCANvp_cosine", p::init<np::ndarray>())
+        .def("predict", &PyDBSCANvp_cosine::predict)
+        .def("predict_eps", &PyDBSCANvp_cosine::predict_eps)
+        .def("query_radius", &PyDBSCANvp_cosine::query_radius);
 
     class_<PyDBSCANgraph>("DBSCANgraph", p::init<np::ndarray>())
         .def("predict", &PyDBSCANgraph::predict)

@@ -6,12 +6,12 @@
 
 namespace clustering
 {
-class DBSCAN_VP : private boost::noncopyable
+class DBSCAN_VP_COSINE : private boost::noncopyable
 {
   private:
     static inline double dist(const Eigen::VectorXf &p1, const Eigen::VectorXf &p2)
     {
-        return 1.0f - p1.dot(p2);
+        return (p1 - p2).norm();
     }
 
     const Dataset::Ptr m_dset;
@@ -19,14 +19,14 @@ class DBSCAN_VP : private boost::noncopyable
   public:
     typedef VPTREE<Eigen::VectorXf, dist> TVpTree;
     typedef std::vector<int32_t> Labels;
-    typedef boost::shared_ptr<DBSCAN_VP> Ptr;
+    typedef boost::shared_ptr<DBSCAN_VP_COSINE> Ptr;
 
-    DBSCAN_VP(const Dataset::Ptr dset)
+    DBSCAN_VP_COSINE(const Dataset::Ptr dset)
         : m_dset(dset), m_fit_time(.0), m_predict_time(.0)
     {
     }
 
-    ~DBSCAN_VP()
+    ~DBSCAN_VP_COSINE()
     {
     }
 
@@ -42,7 +42,7 @@ class DBSCAN_VP : private boost::noncopyable
         const double start = omp_get_wtime();
 
         m_vp_tree = boost::make_shared<TVpTree>();
-        m_vp_tree->create(m_dset);
+        m_vp_tree->create(m_dset, norm_type);
 
         const size_t dlen = d.size();
 

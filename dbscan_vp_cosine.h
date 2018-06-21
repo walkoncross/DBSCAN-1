@@ -1,5 +1,5 @@
-#ifndef DBSCAN_VP_H
-#define DBSCAN_VP_H
+#ifndef DBSCAN_VP_COSINE_H
+#define DBSCAN_VP_COSINE_H
 
 #include "vptree.h"
 #include <Eigen/Dense>
@@ -42,7 +42,7 @@ class DBSCAN_VP_COSINE : private boost::noncopyable
         const double start = omp_get_wtime();
 
         m_vp_tree = boost::make_shared<TVpTree>();
-        m_vp_tree->create(m_dset, norm_type);
+        m_vp_tree->create(m_dset);
 
         const size_t dlen = d.size();
 

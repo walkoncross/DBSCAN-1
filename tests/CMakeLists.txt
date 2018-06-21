@@ -56,6 +56,7 @@ SET( SOURCES
     ${MAIN_TEST_CPP}
     test_vptree.cpp
     test_dbscan_vp.cpp
+    test_dbscan_vp_cosine.cpp
     test_dataset.cpp
 )
 

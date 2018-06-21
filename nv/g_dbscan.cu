@@ -145,7 +145,7 @@ _cu_breadth_first_search_kern(int numpts, int *d_Ea, int *d_Va0, int *d_Va1, int
 namespace clustering
 {
 
-void vertdegree(int N, int colsize, float eps, float *d_data, int *d_Va, int dist_typ)
+void vertdegree(int N, int colsize, float eps, float *d_data, int *d_Va, int dist_type)
 {
   if (dist_type == 0)
   {

@@ -23,6 +23,7 @@ find_package(Boost REQUIRED COMPONENTS program_options python3)
 #SET(PYTHON_EXECUTABLE /usr/bin/python3)
 #SET(PYTHON_INCLUDE_DIR  /usr/include/python3.5)
 #SET(PYTHONLIBS_FOUND True)
+#message( "Using boost libraries: ${Boost_FOUND}")
 
 ## for python2.7
 SET(PYTHON_INCLUDE_PATH /usr/include/python2.7)
@@ -50,17 +51,14 @@ SET( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
 SET( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
 SET( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
 
+#add_subdirectory(gflags)
 add_subdirectory(glog)
 add_subdirectory(googletest)
 
 include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR} 
-	/usr/include/eigen3
-	${google-glog_SOURCE_DIR}/src
-	${google-glog_BINARY_DIR}/
-	${google-glog_BINARY_DIR}/glog
 	${CMAKE_SOURCE_DIR}/eigen
-	)
+)
 
 add_definitions(-DBOOST_UBLAS_NDEBUG -DGFLAGS_NAMESPACE=google)
 

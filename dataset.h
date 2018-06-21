@@ -117,7 +117,6 @@ class Dataset : private boost::noncopyable
             }
             else
             {
-
                 if (m_cols != row_cache.size())
                 {
                     LOG(ERROR) << "Corrupted line \"" << line << "\"";

@@ -143,7 +143,7 @@ TEST(GDBSCAN, vsDBSCANvp_cosine)
 
   GDBSCAN::Ptr gdbs = boost::make_shared<GDBSCAN>(dset);
 
-  gdbs->fit(eps, num_pts);
+  gdbs->fit(eps, num_pts, 1);
   int32_t numcl = gdbs->predict();
   LOG(INFO) << "GPU numcl " << numcl << " fit " << gdbs->get_fit_time()
             << " predict " << gdbs->get_predict_time();

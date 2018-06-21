@@ -9,7 +9,7 @@
 #include <dataset.h>
 #include <Eigen/Dense>
 
-#include "logging.h"
+#include "glog/logging.h"
 
 #include "dbscan_vp_cosine.h"
 

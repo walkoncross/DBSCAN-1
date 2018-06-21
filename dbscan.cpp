@@ -162,7 +162,7 @@ const DBSCAN::DistanceMatrix DBSCAN::calc_dist_matrix(const DBSCAN::ClusterData 
 
 const DBSCAN::DistanceMatrix DBSCAN::calc_cosine_dist_matrix(const DBSCAN::ClusterData &C,
                                                              const DBSCAN::FeaturesWeights &W,
-                                                             int do_norm = 0)
+                                                             int do_norm)
 {
     DBSCAN::ClusterData cl_d = C;
 
@@ -176,7 +176,7 @@ const DBSCAN::DistanceMatrix DBSCAN::calc_cosine_dist_matrix(const DBSCAN::Clust
             // ublas::matrix_column<DBSCAN::ClusterData> col(cl_d, i);
             ublas::matrix_row<DBSCAN::ClusterData> row(cl_d, i);
 
-            double vec_norm = ublas::norm2(row);
+            double vec_norm = ublas::norm_2(row);
             if (vec_norm > 0.0)
             {
                 double scale = 1.0 / vec_norm;
@@ -207,7 +207,7 @@ const DBSCAN::DistanceMatrix DBSCAN::calc_cosine_dist_matrix(const DBSCAN::Clust
 
                 int k = 0;
                 auto inner_prod = ublas::inner_prod(U, V);
-                d_m(i, j) += e * W[k++];
+                d_m(i, j) += inner_prod * W[k++];
 
                 d_m(i, j) = 1.0f - d_m(i, j);
                 d_m(j, i) = d_m(i, j);
@@ -292,7 +292,8 @@ void DBSCAN::dbscan(const DBSCAN::DistanceMatrix &dm)
     }
 }
 
-void DBSCAN::fit(const DBSCAN::ClusterData &C, int dist_type = 0, int do_norm = 1)
+void DBSCAN::fit(const DBSCAN::ClusterData &C,
+                 int dist_type, int do_norm)
 {
     const DBSCAN::FeaturesWeights W = DBSCAN::std_weights(C.size2());
     wfit(C, W, dist_type, do_norm);
@@ -304,10 +305,12 @@ void DBSCAN::fit_precomputed(const DBSCAN::DistanceMatrix &D)
     dbscan(D);
 }
 
-void DBSCAN::wfit(const DBSCAN::ClusterData &C, const DBSCAN::FeaturesWeights &W, int dist_type = 0, int do_norm = 1)
+void DBSCAN::wfit(const DBSCAN::ClusterData &C, const DBSCAN::FeaturesWeights &W,
+                  int dist_type, int do_norm)
 {
     prepare_labels(C.size1());
-    const DBSCAN::DistanceMatrix D;
+    DBSCAN::DistanceMatrix D;
+
     if (dist_type == 1)
     {
         D = calc_cosine_dist_matrix(C, W, do_norm);

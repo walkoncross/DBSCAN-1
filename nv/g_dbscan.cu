@@ -145,7 +145,7 @@ _cu_breadth_first_search_kern(int numpts, int *d_Ea, int *d_Va0, int *d_Va1, int
 namespace clustering
 {
 
-void vertdegree(int N, int colsize, float eps, float *d_data, int *d_Va, int dist_type = 0)
+void vertdegree(int N, int colsize, float eps, float *d_data, int *d_Va, int dist_typ)
 {
   if (dist_type == 0)
   {
@@ -168,7 +168,7 @@ void adjlistsind(int N, int *Va0, int *Va1)
   cudaDeviceSynchronize();
 }
 
-void asmadjlist(int N, int colsize, float eps, float *d_data, int *d_Va1, int *d_Ea, int dist_type = 0)
+void asmadjlist(int N, int colsize, float eps, float *d_data, int *d_Va1, int *d_Ea, int dist_type)
 {
   if (dist_type == 0)
   {

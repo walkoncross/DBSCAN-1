@@ -143,7 +143,7 @@ void GDBSCAN::Va_device_to_host()
 // dist_type:
 //      0 - L2 distance;
 //      otherwise - cosine distance, input features must be normalized beforehands.
-void GDBSCAN::fit(float eps, size_t min_elems, int dist_type = 0)
+void GDBSCAN::fit(float eps, size_t min_elems, int dist_type)
 {
   const double start = omp_get_wtime();
   // First Step (Vertices degree calculation): For each vertex, we calculate the

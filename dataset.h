@@ -13,7 +13,7 @@
 
 #include <Eigen/Dense>
 
-#include "logging.h"
+#include "glog/logging.h"
 
 namespace clustering
 {

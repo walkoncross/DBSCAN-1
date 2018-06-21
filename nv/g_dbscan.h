@@ -29,24 +29,21 @@
 
 #include "dataset.h"
 
-namespace clustering {
+namespace clustering
+{
 
-void
-vertdegree(int N, int colsize, float eps, float* d_data, int* d_Va);
+void vertdegree(int N, int colsize, float eps, float *d_data, int *d_Va, int dist_type = 0);
 
-void
-adjlistsind(int N, int* Va0, int* Va1);
+void adjlistsind(int N, int *Va0, int *Va1);
 
-void
-asmadjlist(int N, int colsize, float eps, float* d_data, int* d_Va1, int* d_Ea);
+void asmadjlist(int N, int colsize, float eps, float *d_data, int *d_Va1, int *d_Ea, int dist_type = 0);
 
-void
-breadth_first_search_kern(int N,
-                          int* d_Ea,
-                          int* d_Va0,
-                          int* d_Va1,
-                          int* d_Fa,
-                          int* d_Xa);
+void breadth_first_search_kern(int N,
+                               int *d_Ea,
+                               int *d_Va0,
+                               int *d_Va1,
+                               int *d_Fa,
+                               int *d_Xa);
 
 class GDBSCAN : private boost::noncopyable
 {
@@ -58,33 +55,33 @@ private:
   // const Dataset::Ptr m_dset;
 
   const Dataset::Ptr m_dset;
-  float* d_data;
+  float *d_data;
   const size_t vA_size;
-  int* d_Va0;
-  int* d_Va1;
+  int *d_Va0;
+  int *d_Va1;
   std::vector<int> h_Va0;
   std::vector<int> h_Va1;
-  int* d_Ea;
-  int* d_Fa;
-  int* d_Xa;
+  int *d_Ea;
+  int *d_Fa;
+  int *d_Xa;
   double m_fit_time;
   double m_predict_time;
   std::vector<bool> core;
   Labels labels;
 
   void Va_device_to_host();
-  void Fa_to_host(std::vector<int>& Fa);
-  void Xa_to_host(std::vector<int>& Xa);
-  void Fa_Xa_to_device(const std::vector<int>& Fa, const std::vector<int>& Xa);
-  void breadth_first_search(int i, int32_t cluster, std::vector<bool>& visited);
+  void Fa_to_host(std::vector<int> &Fa);
+  void Xa_to_host(std::vector<int> &Xa);
+  void Fa_Xa_to_device(const std::vector<int> &Fa, const std::vector<int> &Xa);
+  void breadth_first_search(int i, int32_t cluster, std::vector<bool> &visited);
 
 public:
   GDBSCAN(const Dataset::Ptr dset);
   ~GDBSCAN();
 
-  void fit(float eps, size_t min_elems);
+  void fit(float eps, size_t min_elems, int dist_type = 0);
   int32_t predict();
-  const Labels& get_labels();
+  const Labels &get_labels();
 
   const double get_fit_time() const { return m_fit_time; }
 

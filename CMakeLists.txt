@@ -17,11 +17,20 @@ set(Boost_USE_STATIC_RUNTIME ON)
 # remove boost.numpy because it's now included in boost.python
 find_package(Boost REQUIRED COMPONENTS program_options python3)
 
-SET(PYTHON_INCLUDE_PATH /usr/include/python3.5)
-SET(PYTHON_LIBRARIES /usr/lib/x86_64-linux-gnu/libpython3.5m.so.1)
-SET(PYTHON_EXECUTABLE /usr/bin/python3)
-SET(PYTHON_INCLUDE_DIR  /usr/include/python3.5)
+## for python3.5
+#SET(PYTHON_INCLUDE_PATH /usr/include/python3.5)
+#SET(PYTHON_LIBRARIES /usr/lib/x86_64-linux-gnu/libpython3.5m.so.1)
+#SET(PYTHON_EXECUTABLE /usr/bin/python3)
+#SET(PYTHON_INCLUDE_DIR  /usr/include/python3.5)
+#SET(PYTHONLIBS_FOUND True)
+
+## for python2.7
+SET(PYTHON_INCLUDE_PATH /usr/include/python2.7)
+SET(PYTHON_LIBRARIES /usr/lib/x86_64-linux-gnu/libpython2.7.so.1)
+SET(PYTHON_EXECUTABLE /usr/bin/python)
+SET(PYTHON_INCLUDE_DIR  /usr/include/python2.7)
 SET(PYTHONLIBS_FOUND True)
+message( "Using boost libraries: ${Boost_FOUND}")
 
 if (Boost_FOUND)
     include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
@@ -53,7 +62,7 @@ include_directories(
 	${CMAKE_SOURCE_DIR}/eigen
 	)
 
-add_definitions(-DBOOST_UBLAS_NDEBUG)
+add_definitions(-DBOOST_UBLAS_NDEBUG -DGFLAGS_NAMESPACE=google)
 
 add_library(dbscan dbscan.cpp)
 

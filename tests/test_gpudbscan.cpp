@@ -7,7 +7,7 @@
 
 #include <dataset.h>
 
-#include "logging.h"
+#include "glog/logging.h"
 
 #include "nv/g_dbscan.h"
 

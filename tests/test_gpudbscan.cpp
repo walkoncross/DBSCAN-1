@@ -15,6 +15,7 @@
 #include "dbscan_vp_cosine.h"
 
 #define MAX_PRINT_LEN 10
+#define MIN(a, b) (a) > (b) ? (b) : (a)
 
 namespace
 {
@@ -117,7 +118,7 @@ TEST(GDBSCAN, vsDBSCANvp)
   Dataset::Ptr dset = Dataset::create();
   dset->load_csv(CURRENT_TDIR + "/csv/gpu1000.csv");
 
-  int print_len = min(MAX_PRINT_LEN, dset->rows());
+  int print_len = MIN(MAX_PRINT_LEN, dset->rows());
 
   // TEST GDBSCAN
   GDBSCAN::Ptr gdbs = boost::make_shared<GDBSCAN>(dset);
@@ -143,7 +144,7 @@ TEST(GDBSCAN, vsDBSCANvp)
   LOG(INFO) << "CPU numcl " << numcl << " fit " << dbs->get_fit_time()
             << " predict " << dbs->get_predict_time();
 
-  const DBSCAN::Labels &l2 = dbs->get_labels();
+  const DBSCAN_VP::Labels &l2 = dbs->get_labels();
 
   for (size_t i = 0; i < print_len; ++i)
   {
@@ -159,7 +160,7 @@ TEST(GDBSCAN, vsDBSCANvp_cosine)
   Dataset::Ptr dset = Dataset::create();
   dset->load_csv(CURRENT_TDIR + "/csv/gpu1000.csv");
 
-  int print_len = min(MAX_PRINT_LEN, dset->rows());
+  int print_len = MIN(MAX_PRINT_LEN, dset->rows());
 
   dset->L2_normalize(); // features must be L2-normalized before using cosine distance
 

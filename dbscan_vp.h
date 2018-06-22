@@ -11,7 +11,7 @@ class DBSCAN_VP : private boost::noncopyable
   private:
     static inline double dist(const Eigen::VectorXf &p1, const Eigen::VectorXf &p2)
     {
-        return 1.0f - p1.dot(p2);
+        return (p1 - p2).norm();
     }
 
     const Dataset::Ptr m_dset;

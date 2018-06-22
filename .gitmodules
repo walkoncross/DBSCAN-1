@@ -7,3 +7,6 @@
 [submodule "eigen"]
 	path = eigen
 	url = https://github.com/walkoncross/eigen-git-mirror.git
+[submodule "gflags"]
+	path = gflags
+	url = https://github.com/walkoncross/gflags
